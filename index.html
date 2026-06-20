@@ -45,15 +45,15 @@
     }
     
 
-    /* --- PRO MOBILE CONTROLS OVERLAY SETUP --- */
+/* --- PRO MOBILE CONTROLS OVERLAY SETUP WITH ACTIVE Z-INDEX LOCKS --- */
 #mobileControls { 
     position: fixed; 
     top: 0;
     left: 0;
-    width: 100vw; 
-    height: 100vh; 
+    width: 100%; 
+    height: 100%; 
     display: none; 
-    z-index: 100; 
+    z-index: 999 !important; /* Touch items display directly on top of canvas graphics */
     pointer-events: none;
 }
 
@@ -170,7 +170,6 @@ canvas {
             margin-bottom: 15px !important;
             font-size: clamp(24px, 6vw, 48px) !important; 
         }
-        
 
         /* Dynamic Title Adjustment configurations maps */
         #startScreen h1 {
@@ -180,21 +179,26 @@ canvas {
         }
 
 
+        /* --- FIXED: COMPACT SETTINGS OVERLAY WITH SCROLL OVERRIDE ENGINE --- */
         .settings-panel {
             background: var(--dark-glass);
-            padding: 30px;
+            padding: 15px 25px; /* Compact vertical padding */
             border-radius: 20px;
             border: 2px solid var(--primary);
-            width: 400px;
+            width: 85%;
+            max-width: 420px;
+            max-height: 85vh; /* Constraints panel height inside browser viewports */
+            overflow-y: auto; /* Adds scrollbar automatically if items overflow */
             margin: auto;
             backdrop-filter: blur(10px);
+            box-sizing: border-box;
         }
 
         .setting-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 20px 0;
+            margin: 12px 0; /* Tight margins to prevent Save button from hiding */
         }
 
         #roundDisplay { 
@@ -1110,6 +1114,16 @@ function makeElementCustomDraggable(id) {
 
     let active = false, currentX, currentY, initialX, initialY;
 
+    // Capture tap/click triggers to detect which mobile button needs to be resized
+    el.addEventListener("touchstart", (e) => {
+        if (!isCustomizing) return;
+        setSelectedElementForScaling(id);
+    });
+    el.addEventListener("mousedown", (e) => {
+        if (!isCustomizing) return;
+        setSelectedElementForScaling(id);
+    });
+
     // ==========================================
     // 📱 MOBILE TOUCH HOOK TRACKERS
     // ==========================================
@@ -1186,20 +1200,56 @@ function makeElementCustomDraggable(id) {
     }
 }
 
+// --- FULL FUNCTION REPLACE WITH DYNAMIC SIZING MULTIPLIER INTEGRATION ---
 function applySavedHUDLayout() {
     mobBtnIds.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             let savedLeft = localStorage.getItem(`custom_hud_${id}_left`);
             let savedTop = localStorage.getItem(`custom_hud_${id}_top`);
+            let savedSize = localStorage.getItem(`custom_hud_${id}_size`);
+            
+            // 1. Restore Custom Position Layouts Coordinates Matrix
             if (savedLeft && savedTop) {
                 el.style.left = savedLeft;
                 el.style.top = savedTop;
                 el.style.bottom = "auto";
                 el.style.right = "auto";
             }
+            
+            // 2. Restore Custom Sizing Multipliers Engine Safely
+            if (savedSize) {
+                el.style.width = savedSize + "px";
+                el.style.height = savedSize + "px";
+                el.style.fontSize = Math.round(savedSize * 0.27) + "px"; // Balanced text padding adaptation ratio
+            }
         }
     });
+}
+
+setTimeout(applySavedHUDLayout, 500);
+
+let currentSelectedScalingId = null;
+
+function setSelectedElementForScaling(id) {
+    currentSelectedScalingId = id;
+    const sliderPanel = document.getElementById("hudSizeControllerPanel");
+    if (sliderPanel) {
+        sliderPanel.style.display = "flex";
+        const activeSavedSize = localStorage.getItem(`custom_hud_${id}_size`) || "72";
+        document.getElementById("hudSizeSliderRange").value = activeSavedSize;
+        document.getElementById("hudSizeLabelDisplay").innerText = id.replace("btn","") + ` Size: ${activeSavedSize}px`;
+    }
+}
+
+function applyElementDynamicScale(id, sizeValue) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    el.style.width = sizeValue + "px";
+    el.style.height = sizeValue + "px";
+    el.style.fontSize = Math.round(sizeValue * 0.27) + "px"; // Responsive button label scaling
+    localStorage.setItem(`custom_hud_${id}_size`, sizeValue);
 }
 
 function startCustomizing() {
@@ -1208,7 +1258,31 @@ function startCustomizing() {
     document.getElementById("mobileControls").style.display = "block";
     document.body.classList.add("custom-mode");
     
-    mobBtnIds.forEach(id => makeElementCustomDraggable(id));
+    mobBtnIds.forEach(id => {
+        makeElementCustomDraggable(id);
+        // Load configurations if pre-saved on browser memory hooks
+        let savedSize = localStorage.getItem(`custom_hud_${id}_size`);
+        if (savedSize) applyElementDynamicScale(id, savedSize);
+    });
+
+    // Generate sizing panel elements context inside HTML body layout
+    let sizePanel = document.getElementById("hudSizeControllerPanel");
+    if(!sizePanel) {
+        sizePanel = document.createElement("div");
+        sizePanel.id = "hudSizeControllerPanel";
+        sizePanel.style = "position:fixed; top:20px; right:20px; background:rgba(0,0,0,0.85); border:1px solid #00ffff; padding:10px; border-radius:10px; display:none; flex-direction:column; gap:5px; z-index:2000; box-shadow:0 0 10px #00ffff;";
+        sizePanel.innerHTML = `
+            <span id="hudSizeLabelDisplay" style="font-size:12px; font-weight:bold; color:#00ffff;">Tap Button to Resize</span>
+            <input type="range" id="hudSizeSliderRange" min="45" max="120" value="72" style="width:140px; accent-color:#00ffff;">
+        `;
+        document.body.appendChild(sizePanel);
+        
+        document.getElementById("hudSizeSliderRange").oninput = function() {
+            if(currentSelectedScalingId) {
+                applyElementDynamicScale(currentSelectedScalingId, this.value);
+            }
+        };
+    }
 
     const doneBtn = document.createElement("button");
     doneBtn.innerText = "💾 SAVE HUD LAYOUT";
@@ -1221,6 +1295,7 @@ function startCustomizing() {
         document.body.classList.remove("custom-mode");
         document.getElementById("mobileControls").style.display = "none";
         document.getElementById("settingsScreen").style.display = "block";
+        if(document.getElementById("hudSizeControllerPanel")) document.getElementById("hudSizeControllerPanel").style.display = "none";
         doneBtn.remove();
     };
     document.body.appendChild(doneBtn);
