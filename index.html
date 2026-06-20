@@ -143,25 +143,34 @@ canvas {
     margin-top: 15px;
 }
 
-#startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen { 
+/* --- FIXED RESPONSIVE OVERLAY CONTAINERS ENGINE --- */
+        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen { 
             position: absolute; 
             top: 50%; 
             left: 50%; 
             transform: translate(-50%, -50%); 
             width: 100%;
-            max-height: 90vh; /* Viewport frame content scaling bounds framework */
+            max-width: 500px; /* Boundaries content anchor lock */
+            max-height: 90vh; 
             box-sizing: border-box;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            padding: 15px;
             z-index: 10; 
         }
 
-        /* Standard defaults reset properties setup overrides markers */
-        #startScreen { display: block; }
-        #charSelect, #difficultySelect, #endScreen, #settingsScreen { display: none !important; }
+        /* Clean display type bindings without !important leaks */
+        #startScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #charSelect { display: none; text-align: center; }
+        #difficultySelect { display: none; text-align: center; }
+        #endScreen { display: none; text-align: center; }
+        #settingsScreen { display: none; }
+
+        /* Dynamic Title Adjustment configurations maps */
+        #startScreen h1 {
+            margin-top: 5px !important;
+            margin-bottom: 15px !important;
+            font-size: clamp(24px, 6vw, 48px) !important; 
+        }
+        
 
         /* Dynamic Title Adjustment configurations maps */
         #startScreen h1 {
@@ -441,7 +450,7 @@ canvas {
     <button onclick="activateLeafVillageFullScreen(); showModeSelect();" style="background: #ff8800; padding: 10px 20px; margin: 0; min-width: 200px;">🎮 ENTER WORLD</button>
     <button onclick="toggleSettings(true)" style="background: #ff8800; padding: 10px 20px; margin: 0; min-width: 200px;">⚙️ SETTINGS</button>
   </div>
-  
+
 
   <div id="modeSelect" style="display:none;">
     <button onclick="showCharSelect()" style="background: #e67e22;">⚔️ NARUTO VS SASUKE</button>
