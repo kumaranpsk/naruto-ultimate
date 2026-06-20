@@ -1313,7 +1313,7 @@ function endVideoAndStartFight() {
         showCharacters = true;
         gameRunning = true;
         lastFrameTime = performance.now();
-        loop();
+        loopId = requestAnimationFrame(loop); // ✅ Add this line
     }, 2000);
 }
 
@@ -1644,7 +1644,8 @@ function nextRound(winner) {
 
 
 function loop(time) {
-    if (!gameRunning) return;
+    if (!gameRunning || isPaused) return; // ✅ Add || isPaused here
+    // ... rest of the code
     if (comboTimer > 0) {
     comboTimer--;
 } else {
