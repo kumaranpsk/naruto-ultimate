@@ -432,16 +432,16 @@ canvas {
 </div>
 
 <div id="mobileControls">
-  <button id="btnLeft" class="m-btn" style="position: fixed; bottom: 40px; left: 40px;" ontouchstart="startMove('left')" ontouchend="stopMove('left')">⬅️</button>
-  <button id="btnRight" class="m-btn" style="position: fixed; bottom: 40px; left: 130px;" ontouchstart="startMove('right')" ontouchend="stopMove('right')">➡️</button>
+  <button id="btnLeft" class="m-btn" style="position: absolute; bottom: 12%; left: 6%;" ontouchstart="startMove('left')" ontouchend="stopMove('left')">⬅️</button>
+  <button id="btnRight" class="m-btn" style="position: absolute; bottom: 12%; left: 16%;" ontouchstart="startMove('right')" ontouchend="stopMove('right')">➡️</button>
   
-  <button id="btnC1" class="m-btn" style="position: fixed; bottom: 100px; right: 190px; color: #3498db; border-color: #3498db;" ontouchstart="rasengan()">C1</button>
-  <button id="btnC2" class="m-btn" style="position: fixed; bottom: 170px; right: 115px; color: #9b59b6; border-color: #9b59b6;" ontouchstart="chidori()">C2</button>
-  <button id="btnJump" class="m-btn" style="position: fixed; bottom: 170px; right: 30px; color: #2ecc71; border-color: #2ecc71;" ontouchstart="jump()">⬆️</button>
+  <button id="btnC1" class="m-btn" style="position: absolute; bottom: 25%; right: 20%; color: #3498db; border-color: #3498db;" ontouchstart="rasengan()">C1</button>
+  <button id="btnC2" class="m-btn" style="position: absolute; bottom: 42%; right: 13%; color: #9b59b6; border-color: #9b59b6;" ontouchstart="chidori()">C2</button>
+  <button id="btnJump" class="m-btn" style="position: absolute; bottom: 42%; right: 4%; color: #2ecc71; border-color: #2ecc71;" ontouchstart="jump()">⬆️</button>
   
-  <button id="btnN" class="m-btn" style="position: fixed; bottom: 25px; right: 200px; color: #f1c40f; border-color: #f1c40f;" ontouchstart="shadowClone('p1')">N</button>
-  <button id="btnFire" class="m-btn btn-fire" style="position: fixed; bottom: 20px; right: 110px;" ontouchstart="if(myChar==='sasuke') useFireball('p1')">🔥</button>
-  <button id="btnS" class="m-btn" style="position: fixed; bottom: 95px; right: 25px; color: #e74c3c; border-color: #e74c3c;" ontouchstart="activateSharingan('p1')">S</button>
+  <button id="btnN" class="m-btn" style="position: absolute; bottom: 10%; right: 21%; color: #f1c40f; border-color: #f1c40f;" ontouchstart="shadowClone('p1')">N</button>
+  <button id="btnFire" class="m-btn btn-fire" style="position: absolute; bottom: 8%; right: 12%;" ontouchstart="if(myChar==='sasuke') useFireball('p1')">🔥</button>
+  <button id="btnS" class="m-btn" style="position: absolute; bottom: 24%; right: 4%; color: #e74c3c; border-color: #e74c3c;" ontouchstart="activateSharingan('p1')">S</button>
 </div>
 
 <div id="bg"></div>
@@ -973,22 +973,19 @@ function saveProgress() {
 }
 
 
-// --- COMPLETE MULTI-BROWSER RESPONSIVE SCALE & ORIENTATION MANAGEMENT ENGINE ---
+// --- NEW: SYSTEM OVERRIDE FOR MOBILE SETTINGS & BROWSER ORIENTATIONS ---
 function checkDeviceOrientation() {
     const overlay = document.getElementById("orientationOverlay");
     if (!overlay) return;
 
-    // Mobile check via touch criteria boundary rules
-    const isMobile = window.matchMedia("(max-width: 1024px)").matches || ('ontouchstart' in window);
+    const isMobileDevice = window.matchMedia("(max-width: 1024px)").matches || ('ontouchstart' in window);
     
-    if (isMobile) {
-        // Portrait-la phone straight-ah irundha warning display popup trigger aagum
+    if (isMobileDevice) {
         if (window.innerHeight > window.innerWidth) {
             overlay.style.display = "flex";
-            if(gameRunning) togglePause(true); // Auto freeze battle loop matrix
+            if(gameRunning) togglePause(true); 
         } else {
             overlay.style.display = "none";
-            // Normal system size parameters update on browser frame changes
             resizeGameCanvas();
         }
     } else {
@@ -998,71 +995,73 @@ function checkDeviceOrientation() {
 
 function resizeGameCanvas() {
     const gameCanvas = document.getElementById("game");
+    const mobileHUD = document.getElementById("mobileControls");
     if (!gameCanvas) return;
     
-    // Core game layout dimension coordinates matrix calculations
-    const targetRatio = 1200 / 600; // Original internal workspace resolution aspect ratio bounds
     let windowWidth = window.innerWidth;
     let windowHeight = window.innerHeight;
     
+    const targetRatio = 1200 / 600; 
     let currentRatio = windowWidth / windowHeight;
     
+    let finalCanvasWidth, finalCanvasHeight;
+    
     if (currentRatio > targetRatio) {
-        gameCanvas.style.width = (windowHeight * targetRatio) + "px";
-        gameCanvas.style.height = windowHeight + "px";
+        finalCanvasHeight = windowHeight;
+        finalCanvasWidth = windowHeight * targetRatio;
     } else {
-        gameCanvas.style.width = windowWidth + "px";
-        gameCanvas.style.height = (windowWidth / targetRatio) + "px";
+        finalCanvasWidth = windowWidth;
+        finalCanvasHeight = windowWidth / targetRatio;
+    }
+    
+    gameCanvas.style.width = finalCanvasWidth + "px";
+    gameCanvas.style.height = finalCanvasHeight + "px";
+    
+    if (mobileHUD) {
+        mobileHUD.style.width = finalCanvasWidth + "px";
+        mobileHUD.style.height = finalCanvasHeight + "px";
+        mobileHUD.style.top = gameCanvas.style.top;
+        mobileHUD.style.left = gameCanvas.style.left;
+        mobileHUD.style.transform = gameCanvas.style.transform;
     }
 }
-
 
 function forceLandscapeLock() {
     if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(err => {
-            console.log("WebAPI Native orientation lock bypassed smoothly.");
+            console.log("Device native rotate handle bypass.");
         });
     }
 }
 
-// --- NEW: CHROME BROWSER FULL SCREEN & ADDRESS BAR SUPPRESSION ENGINE ---
+// Full Screen Address Bar Suppression Core Wrapper Function
 function activateLeafVillageFullScreen() {
     const docEl = document.documentElement;
-    
-    // Multi-browser support checking (Chrome, Safari, Firefox)
     if (docEl.requestFullscreen) {
         docEl.requestFullscreen();
-    } else if (docEl.mozRequestFullScreen) { /* Firefox */
-        docEl.mozRequestFullScreen();
-    } else if (docEl.webkitRequestFullscreen) { /* Chrome, Safari, Opera */
+    } else if (docEl.webkitRequestFullscreen) { /* Chrome & Safari */
         docEl.webkitRequestFullscreen();
-    } else if (docEl.msRequestFullscreen) { /* IE/Edge */
-        docEl.msRequestFullscreen();
+    } else if (docEl.mozRequestFullScreen) {
+        docEl.mozRequestFullScreen();
     }
-    
-    // Trigger canvas recalibration directly after switching display viewports
-    setTimeout(() => {
-        if (typeof resizeGameCanvas === "function") resizeGameCanvas();
-    }, 300);
+    setTimeout(resizeGameCanvas, 300);
 }
 
-
-// Bind dynamic event viewport adjustments check actions
-window.addEventListener("resize", checkDeviceOrientation);
-window.addEventListener("orientationchange", checkDeviceOrientation);
-document.addEventListener("DOMContentLoaded", () => {
-    checkDeviceOrientation();
-    setTimeout(checkDeviceOrientation, 400);
-});
-
-// Overriding default startup structures pipeline hooks
-const originalStartGame = startGame;
-startGame = function() {
-    forceLandscapeLock();
+window.addEventListener("resize", () => {
     checkDeviceOrientation();
     resizeGameCanvas();
-    if (typeof originalStartGame === "function") originalStartGame();
-};
+});
+window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+        checkDeviceOrientation();
+        resizeGameCanvas();
+    }, 200);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    checkDeviceOrientation();
+    resizeGameCanvas();
+});
 
 
 function showModeSelect() {
@@ -1188,8 +1187,12 @@ function makeElementCustomDraggable(id) {
         currentX = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, currentX));
         currentY = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, currentY));
 
-        el.style.left = currentX + "px";
-        el.style.top = currentY + "px";
+        // Use percentage mapping values so buttons stay strictly within viewport boundaries on any resize
+        let leftPercent = (currentX / window.innerWidth) * 100;
+        let topPercent = (currentY / window.innerHeight) * 100;
+
+        el.style.left = leftPercent + "%";
+        el.style.top = topPercent + "%";
         el.style.bottom = "auto";  
         el.style.right = "auto";   
     }
