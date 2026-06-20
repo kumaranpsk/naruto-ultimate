@@ -549,7 +549,8 @@ canvas {
      </div>
  </div>
  <!-- Abandon button-ai ippadi maathuna screen UI-laye direct-ah click panni pause pannalam -->
-<button class="quit-btn" onclick="togglePause(true)" style="background: #34495e; padding: 8px 18px; font-size: 13px; margin-top: 10px; border-radius: 8px;">⏸️ PAUSE MATCH</button>
+<!--  New Fixed Button Line -->
+<button class="quit-btn" onclick="togglePause(true)" ontouchstart="togglePause(true)" style="background: #34495e; padding: 8px 18px; font-size: 13px; margin-top: 10px; border-radius: 8px; position: relative; z-index: 300; pointer-events: auto;">⏸️ PAUSE MATCH</button>
 </div>
 
 <div id="authOverlay">
@@ -1327,23 +1328,28 @@ function togglePause(pauseState) {
     isPaused = pauseState;
     
     if (isPaused) {
-        gameRunning = false; // Loop animation-ah freeze panrom
-        document.getElementById("pauseScreen").style.display = "block";
-        document.getElementById("mobileControls").style.display = "none"; // Pause-la controls hidden
+        gameRunning = false; // Stop updating game state
+        cancelAnimationFrame(loopId); // 🛑 FIX: Clear active animation stream completely
         
-        // Pause all running battle sounds safely
-        sounds.rasengan.pause();
-        sounds.chidori.pause();
+        document.getElementById("pauseScreen").style.display = "block";
+        document.getElementById("mobileControls").style.display = "none"; // Hide touch inputs
+        
+        // Pause running special battle sounds safely
+        if(sounds.rasengan) sounds.rasengan.pause();
+        if(sounds.chidori) sounds.chidori.pause();
     } else {
         gameRunning = true;
         document.getElementById("pauseScreen").style.display = "none";
         document.getElementById("mobileControls").style.display = "block";
         
-        // Game-ah thirumba resume panni loop loops resume panrom
+        // Restart the game loop safely without duplicating animation requests
         lastFrameTime = performance.now();
-        requestAnimationFrame(loop);
+        cancelAnimationFrame(loopId); // Safety catch
+        loopId = requestAnimationFrame(loop); // ▶️ FIX: Capture correct reference on resume
     }
 }
+
+
 
 // --- Controls ---
 document.addEventListener("keydown", e => {
