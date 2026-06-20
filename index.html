@@ -148,11 +148,28 @@ canvas {
             top: 50%; 
             left: 50%; 
             transform: translate(-50%, -50%); 
-            width: 100%; 
+            width: 100%;
+            max-height: 90vh; /* Viewport frame content scaling bounds framework */
+            box-sizing: border-box;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             z-index: 10; 
         }
 
-        #charSelect, #difficultySelect, #endScreen, #settingsScreen { display: none; }
+        /* Standard defaults reset properties setup overrides markers */
+        #startScreen { display: block; }
+        #charSelect, #difficultySelect, #endScreen, #settingsScreen { display: none !important; }
+
+        /* Dynamic Title Adjustment configurations maps */
+        #startScreen h1 {
+            margin-top: 5px !important;
+            margin-bottom: 10px !important;
+            font-size: clamp(24px, 6vw, 48px) !important; /* Mobile adaptive typography scaling rules */
+        }
+
 
         .settings-panel {
             background: var(--dark-glass);
@@ -417,15 +434,14 @@ canvas {
 <div id="bg"></div>
 
 <div id="startScreen">
-  <h1 style="font-size: 48px; text-shadow: 0 0 20px red; color: gold;">🔥 NARUTO ULTIMATE 🔥</h1>
+  <h1 style="font-size: 48px; text-shadow: 0 0 20px red; color: gold; margin: 0 0 10px 0;">🔥 NARUTO ULTIMATE 🔥</h1>
   
-  <div id="mainMenuButtons">
-    <!-- --- FIXED: Click pannuna udane address bar vanish aagi, canvas screen kulla automatic adaptive alignment locks aayidum --- -->
-    <button onclick="activateLeafVillageFullScreen(); showModeSelect();" style="background: #ff8800;">🎮 ENTER WORLD</button>
-    <br>
-    
-    <button onclick="toggleSettings(true)" style="background: #ff8800;">⚙️ SETTINGS</button>
+  <!-- Content wrapper inside flexbox alignments limits bounds setup map -->
+  <div id="mainMenuButtons" style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%;">
+    <button onclick="activateLeafVillageFullScreen(); showModeSelect();" style="background: #ff8800; padding: 10px 20px; margin: 0; min-width: 200px;">🎮 ENTER WORLD</button>
+    <button onclick="toggleSettings(true)" style="background: #ff8800; padding: 10px 20px; margin: 0; min-width: 200px;">⚙️ SETTINGS</button>
   </div>
+  
 
   <div id="modeSelect" style="display:none;">
     <button onclick="showCharSelect()" style="background: #e67e22;">⚔️ NARUTO VS SASUKE</button>
