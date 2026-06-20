@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Naruto Ultimate - Extreme Pro Edition</title>
+    <style>
+        
+        
+        :root {
+            --primary: #f39c12;
+            --secondary: #e67e22;
+            --danger: #c0392b;
+            --glass: rgba(255, 255, 255, 0.15);
+            --dark-glass: rgba(0, 0, 0, 0.7);
+            --glow: 0 0 15px var(--primary);
+        }
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            color: white; 
+            text-align: center; 
+            background: #000; 
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+
+        #authOverlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 1000;
+        background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('login_wallpaper.jpg') center/cover;
+        display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .auth-box {
+        background: var(--dark-glass); padding: 40px; border-radius: 20px;
+        border: 2px solid var(--primary); width: 320px; text-align: center;
+    }
+    .auth-input { 
+        width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; 
+        border: 1px solid #444; background: #222; color: white; box-sizing: border-box;
+    }
+    
+
+    /* --- PRO MOBILE CONTROLS OVERLAY SETUP --- */
+#mobileControls { 
+    position: fixed; 
+    top: 0;
+    left: 0;
+    width: 100vw; 
+    height: 100vh; 
+    display: none; 
+    z-index: 100; 
+    pointer-events: none;
+}
+
+.m-btn { 
+    width: 72px; 
+    height: 72px; 
+    font-size: 20px; 
+    font-weight: bold;
+    border-radius: 50%; 
+    border: 2px solid rgba(243, 156, 18, 0.4); 
+    background: radial-gradient(circle, rgba(40, 40, 40, 0.65), rgba(15, 15, 15, 0.85)); 
+    color: white; 
+    backdrop-filter: blur(6px); 
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+    transition: transform 0.05s;
+    pointer-events: auto;
+}
+
+.m-btn:active { 
+    transform: scale(0.9);
+    background: radial-gradient(circle, var(--primary), var(--secondary));
+    box-shadow: var(--glow);
+}
+
+.btn-fire { 
+    width: 88px; 
+    height: 88px; 
+    font-size: 26px;
+    background: radial-gradient(circle, rgba(192, 57, 43, 0.7), rgba(120, 20, 20, 0.9)); 
+    border-color: rgba(231, 76, 60, 0.8);
+    box-shadow: 0 0 15px rgba(192, 57, 43, 0.5);
+}
+
+/* --- CUSTOMIZER RADIAL PULSE EFFECT --- */
+.custom-mode .m-btn {
+    border: 2px dashed #00ffff !important;
+    background: rgba(0, 255, 255, 0.2) !important;
+    animation: layoutPulse 1s infinite alternate;
+}
+
+@keyframes layoutPulse {
+    from { box-shadow: 0 0 5px #00ffff; }
+    to { box-shadow: 0 0 20px #00ffff; }
+}
+
+#bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url("bg1.jpg") center/cover no-repeat;
+    filter: brightness(0.6);
+    z-index: -1;
+}
+
+canvas { 
+    display: none; 
+    width: 100vw; /* Fills mobile width */
+    height: 100vh; /* Fills mobile height */
+    object-fit: fill; 
+}
+
+
+        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 100%; 
+            z-index: 10; 
+        }
+
+        #charSelect, #difficultySelect, #endScreen, #settingsScreen { display: none; }
+
+        .settings-panel {
+            background: var(--dark-glass);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid var(--primary);
+            width: 400px;
+            margin: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        #roundDisplay { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            width: 100%; 
+            z-index: 150; 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        #roundHeaderContainer { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 30px; 
+            margin-bottom: 10px; 
+        }
+
+        .header-side-img { 
+            width: 150px; 
+            height: auto; 
+            filter: drop-shadow(0 0 10px gold); 
+        }
+
+        #roundText { 
+            font-size: 55px; 
+            font-weight: 900; 
+            color: var(--primary); 
+            text-shadow: 0 0 20px black, 0 0 10px var(--primary); 
+            margin: 10px 0; 
+            font-style: italic;
+        }
+
+        .winner-img { 
+            width: 300px; 
+            height: auto; 
+            animation: zoomIn 0.5s; 
+            filter: drop-shadow(0 0 20px white); 
+        }
+
+        @keyframes zoomIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+        button { 
+            padding: 12px 25px; 
+            margin: 10px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            cursor: pointer; 
+            font-weight: bold; 
+            background: rgba(243, 156, 18, 0.8); 
+            color: white; 
+            font-size: 16px; 
+            backdrop-filter: blur(8px); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            transition: 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        button:hover { 
+            background: var(--secondary); 
+            transform: scale(1.05); 
+            box-shadow: 0 0 20px var(--primary); 
+        }
+
+        .back-btn { background: rgba(127, 140, 141, 0.7); }
+        .quit-btn { background: var(--danger); padding: 8px 18px; font-size: 13px; margin-top: 10px; border-radius: 8px; }
+
+
+        #ui { 
+            position: absolute; 
+            top: 15px; 
+            width: 100%; 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            pointer-events: none; 
+        }
+
+        #ui * { pointer-events: auto; }
+
+        #barsWrapper { 
+            width: 95%; 
+            display: flex; 
+            justify-content: space-around; 
+        }
+
+        .bar-container { 
+            width: 320px; 
+            margin-bottom: 5px; 
+            background: var(--dark-glass); 
+            padding: 10px; 
+            border-radius: 15px; 
+            border: 1px solid var(--glass); 
+        }
+
+        .bar { 
+            width: 100%; 
+            height: 20px; 
+            background: #222; 
+            border-radius: 11px; 
+            overflow: hidden; 
+            border: 1px solid #444; 
+        }
+
+        .health {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff87, #60efff);
+            box-shadow: 0 0 20px #00ff87;
+            transition: width 0.4s ease-in-out;
+        }
+
+        .chakra-bar { 
+            width: 100%; 
+            height: 10px; 
+            background: #111; 
+            border-radius: 5px; 
+            margin-top: 5px; 
+            overflow: hidden; 
+        }
+
+        .chakra { 
+            height: 100%; 
+            background: linear-gradient(90deg, #3498db, #2980b9); 
+            box-shadow: 0 0 10px #3498db; 
+            width: 0%; 
+            transition: width 0.3s; 
+        }
+
+        /* --- SHIPPUDEN MENU STYLING --- */
+#shippudenMenu {
+    background: rgba(0, 0, 0, 0.9); /* Pure black overlay */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    z-index: 100;
+}
+
+.shippuden-heading { font-size: 40px; color: gold; margin: 0; text-shadow: 0 0 10px red; }
+.shippuden-subheading { color: #ccc; margin-top: 5px; margin-bottom: 30px; letter-spacing: 2px; }
+
+.mission-grid {
+    display: flex;
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.mission-card {
+    background: #1a1a1a;
+    border: 2px solid #333;
+    width: 280px;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: 0.3s;
+    cursor: pointer;
+}
+
+.mission-card.active:hover {
+    border-color: var(--primary);
+    transform: translateY(-10px);
+    box-shadow: 0 0 20px rgba(243, 156, 18, 0.4);
+}
+
+.card-image-placeholder {
+    height: 140px;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.m1-bg { background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('sand_village.jpg') center/cover; }
+.locked-bg { background: #222; }
+
+.card-details { padding: 20px; text-align: left; }
+.chapter-no { font-size: 12px; color: var(--primary); font-weight: bold; }
+.chapter-title { display: block; font-size: 20px; margin: 5px 0; }
+.chapter-brief { font-size: 13px; color: #888; height: 40px; }
+
+.play-mission-btn {
+    width: 100%;
+    background: var(--primary);
+    margin: 15px 0 0 0;
+    border: none;
+    border-radius: 5px;
+}
+
+.locked-mission-btn {
+    width: 100%;
+    background: #444;
+    margin: 15px 0 0 0;
+    border: none;
+    border-radius: 5px;
+}
+
+        .name-tag { 
+            margin-bottom: 4px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-size: 16px; 
+            text-shadow: 0 0 10px var(--primary); 
+            color: gold; 
+        }
+
+        .score { font-size: 16px; color: #fff; font-weight: 900; }
+    </style>
+</head>
+
+<body>
+
+<div id="roundDisplay">
+  <div id="roundHeaderContainer">
+    <img src="rsasuke.png" class="header-side-img">
+    <img src="rnaruto.png" class="header-side-img">
+  </div>
+  <div id="roundText">ROUND 1</div>
+  <img id="winnerRoundImg" class="winner-img" style="display:none;">
+</div>
+
+<div id="mobileControls">
+  <button id="btnLeft" class="m-btn" style="position: fixed; bottom: 40px; left: 40px;" ontouchstart="startMove('left')" ontouchend="stopMove('left')">⬅️</button>
+  <button id="btnRight" class="m-btn" style="position: fixed; bottom: 40px; left: 130px;" ontouchstart="startMove('right')" ontouchend="stopMove('right')">➡️</button>
+  
+  <button id="btnC1" class="m-btn" style="position: fixed; bottom: 100px; right: 190px; color: #3498db; border-color: #3498db;" ontouchstart="rasengan()">C1</button>
+  <button id="btnC2" class="m-btn" style="position: fixed; bottom: 170px; right: 115px; color: #9b59b6; border-color: #9b59b6;" ontouchstart="chidori()">C2</button>
+  <button id="btnJump" class="m-btn" style="position: fixed; bottom: 170px; right: 30px; color: #2ecc71; border-color: #2ecc71;" ontouchstart="jump()">⬆️</button>
+  
+  <button id="btnN" class="m-btn" style="position: fixed; bottom: 25px; right: 200px; color: #f1c40f; border-color: #f1c40f;" ontouchstart="shadowClone('p1')">N</button>
+  <button id="btnFire" class="m-btn btn-fire" style="position: fixed; bottom: 20px; right: 110px;" ontouchstart="if(myChar==='sasuke') useFireball('p1')">🔥</button>
+  <button id="btnS" class="m-btn" style="position: fixed; bottom: 95px; right: 25px; color: #e74c3c; border-color: #e74c3c;" ontouchstart="activateSharingan('p1')">S</button>
+</div>
+
+<div id="bg"></div>
+
+<div id="startScreen">
+  <h1 style="font-size: 48px; text-shadow: 0 0 20px red; color: gold;">🔥 NARUTO ULTIMATE 🔥</h1>
+  
+  <div id="mainMenuButtons">
+    <button onclick="showModeSelect()" style="background: #ff8800;">🎮 ENTER WORLD</button>
+    <br>
+    <button onclick="toggleSettings(true)" style="background: #ff8800;">⚙️ SETTINGS</button>
+  </div>
+
+  <div id="modeSelect" style="display:none;">
+    <button onclick="showCharSelect()" style="background: #e67e22;">⚔️ NARUTO VS SASUKE</button>
+    <br>
+    <button onclick="showShippudenMenu()" style="background: #d35400; border: 2px solid white;">📜 SHIPPUDEN CHAPTERS</button>
+    <br>
+    <button class="back-btn" onclick="hideModeSelect()">⬅ BACK</button>
+  </div>
+</div>
+
+<div id="settingsScreen" style="display:none;">
+    <div class="settings-panel">
+        <h2 style="color: var(--primary);">SETTINGS</h2>
+        
+        <div class="setting-row">
+            <span>MUSIC VOLUME</span>
+            <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="0.5" onchange="updateVolume(this.value)">
+        </div>
+
+        <div class="setting-row">
+            <span>GRAPHICS (FPS)</span>
+            <div>
+                <button onclick="setFPS(30)" id="fps30" style="padding: 5px 10px; font-size: 12px;">30 FPS</button>
+                <button onclick="setFPS(60)" id="fps60" style="padding: 5px 10px; font-size: 12px; background: green;">60 FPS</button>
+            </div>
+        </div>
+
+        <div class="setting-row">
+            <span>MOBILE CONTROLS</span>
+            <button onclick="startCustomizing()" style="padding: 5px 10px; font-size: 12px;">CUSTOMIZE LAYOUT</button>
+        </div>
+
+        <hr style="border: 0.5px solid #444; margin: 20px 0;">
+
+        <div class="setting-row">
+            <span style="color: #aaa; font-size: 14px;">NINJA SESSION</span>
+            <button onclick="handleLogout()" style="background: var(--danger); padding: 8px 18px; font-size: 12px; border: 1px solid white;">LOGOUT</button>
+        </div>
+
+        <button class="back-btn" onclick="toggleSettings(false)">SAVE & CLOSE</button>
+    </div>
+</div>
+
+<div id="charSelect">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">CHOOSE YOUR NINJA</h3>
+    <button onclick="chooseChar('naruto')">Naruto Uzumaki</button>
+    <button onclick="chooseChar('sasuke')">Sasuke Uchiha</button>
+    <br>
+    <button class="back-btn" onclick="goBack('start')">⬅ Return</button>
+</div>
+
+<div id="difficultySelect">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">SELECT MISSION RANK</h3>
+    <button onclick="setDifficulty('easy')">Easy (Rank D)</button>
+    <button onclick="setDifficulty('medium')">Medium (Rank B)</button>
+    <button onclick="setDifficulty('hard')">Hard (Rank S)</button>
+    <br>
+    <button class="back-btn" onclick="goBack('char')">⬅ Return</button>
+</div>
+
+<div id="shippudenMenu" style="display:none;">
+    <h1 class="shippuden-heading">SHIPPUDEN ARC</h1>
+    <p class="shippuden-subheading">Select Your Mission</p>
+
+    <div class="mission-grid">
+        <div class="mission-card active" onclick="mission1Click()">
+            <div class="card-image-placeholder m1-bg"></div>
+            <div class="card-details">
+                <span class="chapter-no">CHAPTER 1</span>
+                <b class="chapter-title">Gaara's Fate</b>
+                <p class="chapter-brief">Rescue the Kazekage from the Akatsuki Duo.</p>
+                <button class="play-mission-btn">PLAY</button>
+            </div>
+        </div>
+
+        <div class="mission-card locked">
+            <div class="card-image-placeholder locked-bg">
+                <span style="font-size: 40px;">🔒</span>
+            </div>
+            <div class="card-details">
+                <span class="chapter-no">CHAPTER 2</span>
+                <b class="chapter-title">Locked</b>
+                <p class="chapter-brief">Arc details are being prepared...</p>
+                <button class="locked-mission-btn" disabled>LOCKED</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="back-btn" onclick="goBack('mode')">⬅ BACK</button>
+</div>
+    
+
+<div id="endScreen">
+ <h1 id="winnerText" style="font-size: 35px; text-shadow: 0 0 15px gold;"></h1>
+ <button onclick="playAgain()">🔄 Rematch</button>
+ <button onclick="exitGame()">❌ Main Menu</button>
+</div>
+
+<!-- --- PAUSE OVERLAY UI --- -->
+<div id="pauseScreen" style="display:none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; z-index: 200;">
+    <div class="settings-panel" style="text-align: center;">
+        <h1 style="font-size: 38px; text-shadow: 0 0 15px var(--primary); color: gold; margin-top: 0;">MISSION PAUSED</h1>
+        <p style="color: #ccc; font-size: 14px; margin-bottom: 25px;">The Shinobi world is waiting for you...</p>
+        <button onclick="togglePause(false)" style="background: #2ecc71; width: 80%;">▶️ RESUME BATTLE</button>
+        <br>
+        <button onclick="exitGame(); togglePause(false);" class="back-btn" style="background: var(--danger); width: 80%;">🏳️ ABANDON MISSION</button>
+    </div>
+</div>
+
+<div id="ui">
+ <div id="barsWrapper">
+     <div class="bar-container">
+        <div class="name-tag" id="p1Name">Player</div>
+        <div class="bar"><div id="h1" class="health"></div></div>
+        <div class="chakra-bar"><div id="c1" class="chakra"></div></div>
+        <div class="score" id="p1Score">Wins: 0</div>
+     </div>
+     <div class="bar-container">
+        <div class="name-tag" id="p2Name" style="text-align: right;">Bot</div>
+        <div class="bar"><div id="h2" class="health"></div></div>
+        <div class="chakra-bar"><div id="c2" class="chakra"></div></div>
+        <div class="score" id="p2Score" style="text-align: right;">Wins: 0</div>
+     </div>
+ </div>
+ <!-- Abandon button-ai ippadi maathuna screen UI-laye direct-ah click panni pause pannalam -->
+<button class="quit-btn" onclick="togglePause(true)" style="background: #34495e; padding: 8px 18px; font-size: 13px; margin-top: 10px; border-radius: 8px;">⏸️ PAUSE MATCH</button>
+</div>
+
+<div id="authOverlay">
+    <div class="auth-box">
+        <h2 style="color: gold; margin-top: 0;">NINJA ACADEMY</h2>
+        <p style="font-size: 12px; color: #aaa;">Create account to save progress</p>
+        <input type="email" id="email" class="auth-input" placeholder="Ninja Email">
+        <input type="password" id="password" class="auth-input" placeholder="Password">
+        <button onclick="handleAuth('login')" style="width: 100%;">LOG IN</button>
+        <button onclick="handleAuth('signup')" style="width: 100%; background: #34495e;">NEW REGISTER</button>
+        <p id="authError" style="color: #e74c3c; font-size: 13px; margin-top: 10px;"></p>
+    </div>
+</div>
+
+<video id="introVideo" style="display:none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: 999;" playsinline></video>
+<canvas id="game" width="1200" height="600"></canvas>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+<script>
+
+
+
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const maxHealth = 800;
+
+
+
+const characterAssets = {
+    naruto: {
+        stance: [], run: [], jump: [], attack: []
+    },
+    sasuke: {
+        stance: [], run: [], jump: [], attack: []
+    }
+};
+
+const assets = {
+    naruto: { stance: 4, run: 6, jump: 3, attack: 7, takingdamage: 8 },
+    sasuke: { stance: 4, run: 6, jump: 3, attack: 4, takingdamage: 8 }
+};
+
+// 1. Single Image Assets
+const rasenganImg = new Image(); rasenganImg.src = "rasengan.png";
+const chidoriImg = new Image(); chidoriImg.src = "chidori.png";
+const swordImg = new Image(); swordImg.src = "sward.png";
+const kunaiImg = new Image(); kunaiImg.src = 'kunaiknife.png'; 
+
+// 2. Loading Tracker
+let totalImages = 0;
+let imagesLoaded = 0;
+let allAssetsReady = false;
+
+function imageLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded >= totalImages) {
+        allAssetsReady = true;
+        console.log("SHINOBI READY: All assets loaded!");
+    }
+}
+
+const charSprites = { naruto: {}, sasuke: {} };
+
+function loadAllSprites() {
+    for (let char in assets) {
+        for (let action in assets[char]) {
+            totalImages += assets[char][action];
+        }
+    }
+    totalImages += 4; // Skills + Kunai
+
+    for (let char in assets) {
+        for (let action in assets[char]) {
+            charSprites[char][action] = [];
+            for (let i = 1; i <= assets[char][action]; i++) {
+                let img = new Image();
+                img.onload = imageLoaded;
+                img.onerror = () => {
+                    console.error("CRITICAL: " + char + action + i + ".png is missing or broken!");
+                };
+                img.src = `${char}${action}${i}.png`; 
+                charSprites[char][action].push(img);
+            }
+        }
+    }
+}
+loadAllSprites();
+
+
+
+// Audio
+const sounds = {
+    rasengan: new Audio("rasengan.mp3"),
+    chidori: new Audio("chidori.mp3"),
+    round: new Audio("round.mp3"),
+    winNaruto: new Audio("winnaruto.mp3"),
+    winSasuke: new Audio("winsasuke.mp3"),
+    sharingan: new Audio("sharingan.mp3"),
+    shadowclone: new Audio("shadowclone.mp3")
+};
+
+
+// --- FIREBASE CONFIGURATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyD4EvxvodP4vxw9QwDVh7vi3MIlh2sZt8g",
+  authDomain: "naruto-game-fb188.firebaseapp.com",
+  databaseURL: "https://naruto-game-fb188-default-rtdb.firebaseio.com",
+  projectId: "naruto-game-fb188",
+  storageBucket: "naruto-game-fb188.firebasestorage.app",
+  messagingSenderId: "645019682130",
+  appId: "1:645019682130:web:cbdb50396f683483e4268b"
+};
+
+// Global Variables
+let gameRunning = false, showCharacters = false;
+let isPaused = false; // Game Pause tracker variable
+let loopId, myChar = "", enemyChar = "";
+let fireCounter = 0, isFiring = false;
+let difficulty = "easy", currentRound = 1, p1Wins = 0, p2Wins = 0;
+let p1 = { chakra: 0 }, p2 = { chakra: 0 }, attacks = [];
+let clones = [];
+let keys = {};
+let comboCount = 0;
+let comboTimer = 0;
+let comboDelay = 25; // frames gap
+ 
+
+// SETTINGS VARIABLES
+let gameFPS = 60;
+let lastFrameTime = 0;
+let isCustomizing = false;
+let shakeAmount = 0;
+
+// Assets loading kitta ithai add pannunga
+const tailsSprites = [];
+const tailsCount = 18; // 1 to 18 images
+
+function loadTails() {
+    for (let i = 1; i <= tailsCount; i++) {
+        let img = new Image();
+        img.src = `4tails${i}.png`; 
+        tailsSprites.push(img);
+    }
+}
+loadTails();
+
+
+// --- FIREBALL ASSETS (STEP 1) ---
+const fireballSprites = [];
+const fireballCount = 11; // Neenga sonna 11 images
+
+function loadFireball() {
+    for (let i = 1; i <= fireballCount; i++) {
+        let img = new Image();
+        img.onload = imageLoaded;
+        img.onerror = () => console.error("Fireball image missing: fireball" + i + ".png");
+        img.src = `fireball${i}.png`; // fireball1.png to fireball11.png
+        fireballSprites.push(img);
+    }
+}
+loadFireball();
+
+
+// --- FIREBALL JUTSU (STEP 1: HIDE ATTACKER) ---
+function useFireball(owner) {
+    let p = (owner === "p1") ? p1 : p2;
+    // --- DAMAGE LOCK: Character adi vaangumpodhu fireball poda koodathu ---
+    if(!p || p.chakra < 50 || !gameRunning || sharinganCinematic || p.isHitState) return;
+
+    p.chakra -= 50;
+    
+    // Fireball fire pannum pothu character-ah hide panroom
+    p.attacking = true; 
+    
+    let target = (owner === "p1") ? p2 : p1;
+    let dir = (target.x > p.x) ? 1 : -1;
+
+    attacks.push({ 
+        type: "fireball", 
+        x: p.x + (dir === 1 ? 50 : -50), 
+        y: p.y + 20, 
+        dir: dir, 
+        owner: owner, 
+        frame: 0,
+        timer: 0,
+        isFinished: false 
+    });
+}
+
+
+// Initialize
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const rtdb = firebase.database();
+let currentUser = null;
+
+
+class Ninja {
+    constructor(name, x, y) {
+        this.name = name;
+        this.x = x; this.y = y;
+        this.vx = 0; this.vy = 0;
+        this.health = 800;
+        this.chakra = 0;
+        this.jumping = false;
+        this.attacking = false;
+        this.state = 'stance';
+        this.frame = 0;
+        this.frameTimer = 0;
+        this.stagger = 12; // Slow animation frame rate
+        this.isTailsMode = false;
+        this.tailsFrame = 0;
+        this.tailsTimer = 0;
+        this.lastGoodImg = null; // <--- ITHU KANDIPPA IRUKKANUM
+    }
+
+    update() {
+// --- INTENSE IMPACT INTERCEPT: Physics & Gravity Lock ---
+if (this.isHitState) {
+    this.state = 'takingdamage';
+    this.vx = 0; 
+    this.vy = 0; 
+    this.attacking = false; // Pure animation lock: Forces attack states to false instantly
+} else {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += 0.6; 
+    if(this.y >= 440) { this.y = 440; this.vy = 0; this.jumping = false; }
+}
+
+if (this.isHitState) {
+    this.state = 'takingdamage';
+    
+    // --- UPDATED SPECIAL PERCENTAGE ANIME SLOW-MO STAGGER ENGINE ---
+    // Baseline delay logic is 12 frames gap.
+    // Sasuke: 10% Slow = 12 * 1.10 = 13.2 -> Math.round is 13 frames delay.
+    // Naruto: 20% Slow = 12 * 1.20 = 14.4 -> Math.round is 14 frames delay.
+    if (this.name === 'sasuke') {
+        this.stagger = 13; 
+    } else if (this.name === 'naruto') {
+        this.stagger = 14;
+    }
+} else if (this.attacking) {
+    this.state = 'attack';
+} else if (this.jumping) {
+    this.state = 'jump';
+} else if (this.vx !== 0) {
+    this.state = 'run';
+} else {
+    this.state = 'stance';
+}
+
+let frames = charSprites[this.name][this.state];
+if (!frames || frames.length === 0) return;
+
+this.frameTimer++;
+if (this.frameTimer % this.stagger === 0) {
+    this.frame = (this.frame + 1) % frames.length;
+
+    // Reset hit state blocks after exact 8 frames execution finishes smoothly
+    if (this.state === 'takingdamage' && this.frame === frames.length - 1) {
+        this.isHitState = false; 
+        this.frame = 0;
+        this.stagger = 12; // Reset baseline timing speed safely
+    }
+
+    if (this.state === 'attack' && this.frame === frames.length - 1) {
+        this.attacking = false;
+        this.frame = 0; 
+    }
+}
+}
+
+
+
+    // --- STEP 1: NINJA CLASS DRAWING SAFETY ---
+draw(enemyX) {
+    if (this.isTailsMode) {
+        let img = tailsSprites[this.tailsFrame];
+        if (img && img.complete) {
+            ctx.save();
+            if (this.tailsDir === -1) {
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, -this.x - 160, this.y - 20, 160, 160);
+            } else {
+                ctx.drawImage(img, this.x, this.y - 20, 160, 160);
+            }
+            ctx.restore();
+            return; 
+        }
+    }
+    
+    // Normal Drawing Logic (Unga palaya code...)
+    if (!charSprites[this.name] || !charSprites[this.name][this.state]) return;    if (!charSprites[this.name] || !charSprites[this.name][this.state]) return;
+    let frames = charSprites[this.name][this.state];
+    let img = frames[this.frame];
+
+    // MUKKIYAM: S3/Docker loading safety logic
+    if (img && img.complete && img.naturalWidth !== 0) { 
+        ctx.save();
+        ctx.globalAlpha = 1.0; // Main character eppothum 100% theriya force panroom
+        
+        if (this.x > enemyX) {
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, -this.x - 110, this.y, 110, 160);
+        } else {
+            ctx.drawImage(img, this.x, this.y, 110, 160);
+        }
+        ctx.restore();
+    } else {
+        // Image ready-ah illana console-la message kaattum (Debugging)
+        if(img) console.warn("Waiting for " + this.name + " assets...");
+    }
+ }
+}
+function handleLogout() {
+    if(confirm("Are you sure you want to leave the Hidden Leaf Village, Ninja?")) {
+        auth.signOut().then(() => {
+            // Logout aanathum page-ah reload panna automatic-ah login screen vandhudum
+            location.reload(); 
+        }).catch((error) => {
+            console.error("Logout Error: ", error);
+        });
+    }
+}
+
+async function handleAuth(type) {
+    const emailValue = document.getElementById('email').value.trim(); 
+    const passwordValue = document.getElementById('password').value;
+    const errorEl = document.getElementById('authError');
+    
+    try {
+        if(type === 'signup') {
+            const res = await auth.createUserWithEmailAndPassword(emailValue, passwordValue);
+            // 1. Verification Email anuppuroom
+            await res.user.sendEmailVerification();
+            
+            // 2. Initial Data setup
+            await rtdb.ref('users/' + res.user.uid).set({ wins: 0, unlockedChapters: [1] });
+            
+            errorEl.style.color = "lightgreen";
+            errorEl.innerText = "Verification link sent! Please check your inbox and verify to login.";
+            auth.signOut(); // Verify panra varai login panna vida koodathu
+        } else {
+            const res = await auth.signInWithEmailAndPassword(emailValue, passwordValue);
+            
+            // 3. User verify pannittaangala nu check panroom
+            if(res.user.emailVerified) {
+                document.getElementById('authOverlay').style.display = 'none';
+                loadUserData();
+            } else {
+                errorEl.innerText = "Please verify your email first! Check your inbox.";
+                auth.signOut(); // Verify aagala na thirumba login screen-ke anuppiduvom
+            }
+        }
+    } catch (err) {
+        errorEl.style.color = "#e74c3c";
+        errorEl.innerText = err.message;
+    }
+}
+
+
+// Progress-ah Cloud-la irundhu edukka
+function loadUserData() {
+    currentUser = auth.currentUser;
+    if(currentUser) {
+        rtdb.ref('users/' + currentUser.uid).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if(data) {
+                p1Wins = data.wins || 0;
+                document.getElementById("p1Score").innerText = "Wins: " + p1Wins;
+                // Chapters update logic inga add pannalam
+            }
+        });
+    }
+}
+
+// Win aagumbothu save panna
+function saveProgress() {
+    if(currentUser) {
+        rtdb.ref('users/' + currentUser.uid).update({
+            wins: p1Wins
+        });
+    }
+}
+
+
+function requestLandscape() {
+    if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(function(error) {
+            console.log("Orientation lock not supported on this device.");
+        });
+    }
+}
+
+// Call this inside your startGame function
+const originalStartGame = startGame;
+startGame = function() {
+    requestLandscape(); // Forces landscape
+    originalStartGame(); // Starts the game
+};
+
+
+function showModeSelect() {
+    document.querySelector("#startScreen h1").style.display = "none";
+    document.getElementById("mainMenuButtons").style.display = "none";
+    document.getElementById("modeSelect").style.display = "block";
+    // Ensure background is correct for menu
+    document.getElementById("bg").style.backgroundImage = "url('bg1.jpg')";
+}
+
+function hideModeSelect() {
+    // Back varum pothu Title-ah thirumba kaattum
+    document.querySelector("#startScreen h1").style.display = "block";
+    document.getElementById("modeSelect").style.display = "none";
+    document.getElementById("mainMenuButtons").style.display = "block";
+}
+function toggleSettings(show) {
+    // Start screen-ah hide/show panni overlap aagaratha thadukkurom
+    document.getElementById("startScreen").style.display = show ? "none" : "block";
+    document.getElementById("settingsScreen").style.display = show ? "block" : "none";
+}
+
+function showShippudenMenu() {
+    document.getElementById("modeSelect").style.display = "none";
+    document.getElementById("shippudenMenu").style.display = "block";
+}
+
+// Ithu ippoதைக்கு empty-ah irukkum
+function mission1Click() {
+    // Neenga solra logic-ah inga aduthu add pannuvom
+}
+
+function updateVolume(val) {
+    Object.values(sounds).forEach(s => s.volume = val);
+}
+
+function setFPS(val) {
+    gameFPS = val;
+    document.getElementById("fps30").style.background = val === 30 ? "green" : "";
+    document.getElementById("fps60").style.background = val === 60 ? "green" : "";
+}
+
+// --- DYNAMIC DRAG ENGINE (MOBILE TOUCH + LAPTOP MOUSE FULL SUPPORT) ---
+const mobBtnIds = ["btnLeft", "btnRight", "btnC1", "btnC2", "btnJump", "btnN", "btnFire", "btnS"];
+
+function makeElementCustomDraggable(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    let active = false, currentX, currentY, initialX, initialY;
+
+    // ==========================================
+    // 📱 MOBILE TOUCH HOOK TRACKERS
+    // ==========================================
+    el.addEventListener("touchstart", (e) => {
+        if (!isCustomizing) return;
+        e.preventDefault(); 
+        let rect = el.getBoundingClientRect();
+        initialX = e.touches[0].clientX - rect.left;
+        initialY = e.touches[0].clientY - rect.top;
+        active = true;
+    }, { passive: false });
+
+    el.addEventListener("touchmove", (e) => {
+        if (!active || !isCustomizing) return;
+        e.preventDefault();
+        currentX = e.touches[0].clientX - initialX;
+        currentY = e.touches[0].clientY - initialY;
+        handleClamping();
+    }, { passive: false });
+
+    el.addEventListener("touchend", () => {
+        if (!isCustomizing) return;
+        active = false;
+        saveHUDPositions();
+    });
+
+    // ==========================================
+    // 💻 LAPTOP MOUSE CLICK & DRAG HOOK TRACKERS
+    // ==========================================
+    el.addEventListener("mousedown", (e) => {
+        if (!isCustomizing) return;
+        e.preventDefault();
+        let rect = el.getBoundingClientRect();
+        initialX = e.clientX - rect.left;
+        initialY = e.clientY - rect.top;
+        active = true;
+
+        window.addEventListener("mousemove", mouseDragMove);
+        window.addEventListener("mouseup", mouseDragEnd);
+    });
+
+    function mouseDragMove(e) {
+        if (!active || !isCustomizing) return;
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        handleClamping();
+    }
+
+    function mouseDragEnd() {
+        if (active && isCustomizing) {
+            active = false;
+            saveHUDPositions();
+        }
+        window.removeEventListener("mousemove", mouseDragMove);
+        window.removeEventListener("mouseup", mouseDragEnd);
+    }
+
+    // ==========================================
+    // ⚙️ CORE CALCULATIONS PROCESSING UNITS
+    // ==========================================
+    function handleClamping() {
+        currentX = Math.max(0, Math.min(window.innerWidth - el.offsetWidth, currentX));
+        currentY = Math.max(0, Math.min(window.innerHeight - el.offsetHeight, currentY));
+
+        el.style.left = currentX + "px";
+        el.style.top = currentY + "px";
+        el.style.bottom = "auto";  
+        el.style.right = "auto";   
+    }
+
+    function saveHUDPositions() {
+        localStorage.setItem(`custom_hud_${id}_left`, el.style.left);
+        localStorage.setItem(`custom_hud_${id}_top`, el.style.top);
+    }
+}
+
+function applySavedHUDLayout() {
+    mobBtnIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            let savedLeft = localStorage.getItem(`custom_hud_${id}_left`);
+            let savedTop = localStorage.getItem(`custom_hud_${id}_top`);
+            if (savedLeft && savedTop) {
+                el.style.left = savedLeft;
+                el.style.top = savedTop;
+                el.style.bottom = "auto";
+                el.style.right = "auto";
+            }
+        }
+    });
+}
+
+function startCustomizing() {
+    isCustomizing = true;
+    document.getElementById("settingsScreen").style.display = "none";
+    document.getElementById("mobileControls").style.display = "block";
+    document.body.classList.add("custom-mode");
+    
+    mobBtnIds.forEach(id => makeElementCustomDraggable(id));
+
+    const doneBtn = document.createElement("button");
+    doneBtn.innerText = "💾 SAVE HUD LAYOUT";
+    doneBtn.id = "doneCustomBtn";
+    doneBtn.style.position = "fixed"; doneBtn.style.top = "20px"; doneBtn.style.left = "50%";
+    doneBtn.style.transform = "translateX(-50%)"; doneBtn.style.zIndex = "1000"; doneBtn.style.background = "#2ecc71";
+    
+    doneBtn.onclick = () => {
+        isCustomizing = false;
+        document.body.classList.remove("custom-mode");
+        document.getElementById("mobileControls").style.display = "none";
+        document.getElementById("settingsScreen").style.display = "block";
+        doneBtn.remove();
+    };
+    document.body.appendChild(doneBtn);
+}
+
+setTimeout(applySavedHUDLayout, 500);
+
+
+let sharinganCinematic = false;
+let cinematicStep = 0; 
+let cinematicTimer = 0;
+let cinematicAttacker = "p1"; 
+
+// --- UI Functions ---
+function showCharSelect() {
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("charSelect").style.display = "block";
+    isStoryMode = false; // Free battle mode-ah confirm panrom
+}
+
+function goBack(target) {
+    if(target === 'start') {
+        document.getElementById("charSelect").style.display = "none";
+        document.getElementById("startScreen").style.display = "block";
+        hideModeSelect(); // This ensures we go all the way back to the clean home page
+    } else if(target === 'char') {
+        document.getElementById("difficultySelect").style.display = "none";
+        document.getElementById("charSelect").style.display = "block";
+    } else if(target === 'mode') {
+        document.getElementById("shippudenMenu").style.display = "none";
+        document.getElementById("modeSelect").style.display = "block";
+    }
+}
+
+function chooseChar(char) {
+    myChar = char;
+    enemyChar = (char === "naruto") ? "sasuke" : "naruto";
+    document.getElementById("charSelect").style.display = "none";
+    document.getElementById("difficultySelect").style.display = "block";
+    document.getElementById("p1Name").innerText = myChar;
+    document.getElementById("p2Name").innerText = enemyChar + " (BOT)";
+}
+
+function setDifficulty(level) {
+    difficulty = level;
+    document.getElementById("difficultySelect").style.display = "none";
+    // This is where the battle background is set:
+    document.getElementById("bg").style.backgroundImage = "url('bg.jpg')"; 
+    document.getElementById("bg").style.filter = "brightness(0.4)";
+    p1Wins = 0; p2Wins = 0; currentRound = 1;
+    reset(); 
+    startGame();
+}
+
+function reset() {
+    // let use panna koodathu, direct-ah assign pannanum
+   p1 = new Ninja(myChar, 150, 440);
+   p2 = new Ninja(enemyChar, 950, 440);    clones = [];
+    sharinganCinematic = false;
+    cinematicStep = 0;
+    cinematicTimer = 0;
+    shakeAmount = 0;
+    document.getElementById("p1Score").innerText = "Wins: " + p1Wins;
+    document.getElementById("p2Score").innerText = "Wins: " + p2Wins;
+}
+
+function startGame() {
+    gameRunning = false;
+    showCharacters = false;
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("mainMenuButtons").style.display = "none";
+    document.getElementById("modeSelect").style.display = "none";
+    document.getElementById("game").style.display = "none"; // Hide canvas during video play
+    document.getElementById("ui").style.display = "none"; // Hide health bars during video
+    document.getElementById("mobileControls").style.display = "none"; // Hide touch buttons
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- PLAY CINEMATIC ANIME VIDEO INTRO ---
+    const video = document.getElementById("introVideo");
+    video.src = "intro_video.mp4"; // Unga loop video file layout check
+    video.style.display = "block";
+    
+    if (sounds.round) sounds.round.pause(); // Pause standard rounds audio
+    
+    video.currentTime = 0;
+    video.play().catch(e => {
+        console.log("Video autoplay blocked or file missing: Loading match directly.");
+        endVideoAndStartFight(); // File miss aana error varama game automatic trigger aagidum
+    });
+
+    // When the cinematic video ends naturally, trigger the real battle!
+    video.onended = function() {
+        endVideoAndStartFight();
+    };
+
+    // Listeners for skip triggers
+    window.addEventListener("keydown", skipIntroVideo);
+    window.addEventListener("touchstart", skipIntroVideo);
+}
+
+function skipIntroVideo() {
+    const video = document.getElementById("introVideo");
+    if (video && video.style.display === "block") {
+        video.pause();
+        endVideoAndStartFight();
+    }
+}
+
+function endVideoAndStartFight() {
+    // Clear skip monitoring window bindings to prevent leakage
+    window.removeEventListener("keydown", skipIntroVideo);
+    window.removeEventListener("touchstart", skipIntroVideo);
+
+    const video = document.getElementById("introVideo");
+    if(video) video.style.display = "none";
+
+    // Play standard round voice over safely
+    if (sounds.round) {
+        sounds.round.currentTime = 0;
+        sounds.round.play().catch(e => console.log("Audio skipped"));
+    }
+
+    // Restore real canvas arena elements
+    document.getElementById("game").style.display = "block";
+    document.getElementById("ui").style.display = "flex";
+    document.getElementById("mobileControls").style.display = "block";
+
+    let rd = document.getElementById("roundDisplay");
+    let rt = document.getElementById("roundText");
+    let rh = document.getElementById("roundHeaderContainer");
+    let rw = document.getElementById("winnerRoundImg");
+    
+    rt.innerText = "ROUND " + currentRound;
+    rh.style.display = "flex";
+    rw.style.display = "none";
+    rd.style.display = "flex";
+
+    setTimeout(() => {
+        rd.style.display = "none";
+        showCharacters = true;
+        gameRunning = true;
+        lastFrameTime = performance.now();
+        loop();
+    }, 2000);
+}
+
+function triggerShake(intensity) {
+    shakeAmount = intensity;
+}
+
+function togglePause(pauseState) {
+    if (!gameRunning && !isPaused) return; // Battle nadakkala na pause trigger aagadhu
+
+    isPaused = pauseState;
+    
+    if (isPaused) {
+        gameRunning = false; // Loop animation-ah freeze panrom
+        document.getElementById("pauseScreen").style.display = "block";
+        document.getElementById("mobileControls").style.display = "none"; // Pause-la controls hidden
+        
+        // Pause all running battle sounds safely
+        sounds.rasengan.pause();
+        sounds.chidori.pause();
+    } else {
+        gameRunning = true;
+        document.getElementById("pauseScreen").style.display = "none";
+        document.getElementById("mobileControls").style.display = "block";
+        
+        // Game-ah thirumba resume panni loop loops resume panrom
+        lastFrameTime = performance.now();
+        requestAnimationFrame(loop);
+    }
+}
+
+// --- Controls ---
+document.addEventListener("keydown", e => {
+    // --- DAMAGE INPUT INTERCEPT: Un character adi vaangumbodhu endha action keys press pannunaalum control actions return aagidum ---
+    if (p1 && p1.isHitState) {
+        if(e.key=="a" || e.key=="d" || e.key==" " || e.key=="w" || e.key=="e" || e.key=="q" || e.key=="n" || e.key=="s" || e.key=="f" || e.key=="b") {
+            return; 
+        }
+    }
+
+    if(e.key=="a") keys.left = true;
+    if(e.key=="d") keys.right = true;
+    // --- PAUSE JUTSU KEY TRIGGERS ---
+    if(e.key === "Escape" || e.key === "p" || e.key === "P") {
+        if(gameRunning || isPaused) { // Game active-ah running-la irundha mattum thaan pause trigger aagum
+            togglePause(!isPaused);
+        }
+    }
+    if(e.key==" ") jump();
+    if(e.key=="w") isFiring = true;
+    if(e.key=="e") rasengan(); 
+    if(e.key=="q") chidori();
+    if(e.key=="n") shadowClone("p1"); 
+    if(e.key=="s") activateSharingan("p1");    if(e.key=="f") {
+    if(myChar === "sasuke") {
+        useFireball("p1");
+    } else {
+        console.log("Naruto cannot use Fireball!");
+    }
+}
+if(e.key === "b") {
+    if(myChar === "naruto" && !p1.isTailsMode && p1.chakra >= 50) {
+        p1.isTailsMode = true;
+        p1.tailsFrame = 0;
+        p1.tailsTimer = 0;
+        p1.tailsLoopCount = 0; // Pudhu variable: loop count track panna
+        // Character thirumbi irukkura direction-ah edukkurom
+        p1.tailsDir = (p2.x > p1.x) ? 1 : -1; 
+        p1.chakra -= 50; // B click pannuna udanae chakra kuraiyum
+    }
+}
+});
+document.addEventListener("keyup", e => {
+    if(e.key=="a") keys.left = false;
+    if(e.key=="d") keys.right = false;
+    if(e.key=="w") isFiring = false;
+});
+
+function shadowClone(owner) {
+    // 'p' character object-ah sariyaa edukka
+    let p = (owner === "p1") ? p1 : p2;
+    
+    // Safety checks: Chakra 60 mela irukanum and Naruto-va irukanum
+    if(!p || p.chakra < 60 || !gameRunning || sharinganCinematic) return;
+    
+    let char = (owner === "p1") ? myChar : enemyChar;
+    if(char !== "naruto") return;
+
+    // Chakra-va kuraikuroom
+    p.chakra -= 60;
+    
+    if(sounds.shadowclone) {
+        sounds.shadowclone.currentTime = 0; 
+        sounds.shadowclone.play();
+    }
+
+    // Clones spawn location
+    let positions = [p.x - 70, p.x + 70];
+    
+    positions.forEach(spawnX => {
+        let finalX = Math.max(50, Math.min(canvas.width - 150, spawnX));
+        // Clones array-kku push panroom
+        clones.push({ 
+            x: finalX, 
+            y: 440, 
+            life: 250, 
+            owner: owner,
+            state: 'run',
+            frame: 0
+        });
+    });
+}
+
+
+function activateSharingan(owner) {
+    let p = (owner === "p1") ? p1 : p2;
+    // Safety check: p irukka nu check panrom
+    if(!p || p.chakra === undefined || p.chakra < 80 || !gameRunning || sharinganCinematic) return;
+
+    let char = (owner === "p1") ? myChar : enemyChar;
+    if(char !== "sasuke") return;
+
+    p.chakra -= 80;
+    cinematicAttacker = owner; 
+    sounds.sharingan.currentTime = 0; sounds.sharingan.play();
+    sharinganCinematic = true;
+    cinematicStep = 0; cinematicTimer = 0;
+    triggerShake(10);
+}
+
+
+function startMove(dir) { if(isCustomizing || p1.isHitState) return; if(dir === 'left') keys.left = true; if(dir === 'right') keys.right = true; }
+function stopMove(dir) { if(dir === 'left') keys.left = false; if(dir === 'right') keys.right = false; }
+
+function startFire() { 
+    // --- STRICT ATTACK LOCK: Adi padumpodhu standard continuous basic screen triggers lock ---
+    if(!gameRunning || p1.attacking || p1.isHitState) return; 
+    
+    isFiring = true;      
+    p1.attacking = true;
+    p1.frame = 0;         // First frame-la irundhu start panna
+    
+    createAttack("p1", "normal"); 
+}
+
+function stopFire() { isFiring = false; }
+function jump() { if(!isCustomizing && !p1.jumping && gameRunning) { 
+    p1.vy = -13; // Value-ah kammi panna height kuraiyum
+    p1.jumping = true; 
+} }
+
+function createAttack(owner, type = "normal") {
+    let attacker = (owner === "p1") ? p1 : p2;
+    let target = (owner === "p1") ? p2 : p1;
+    let dir = (target.x > attacker.x) ? 1 : -1;
+
+    // COMBO LOGIC
+    comboCount++;
+    comboTimer = comboDelay;
+
+    if (comboCount > 3) comboCount = 1;
+
+    let damage = 10;
+    if (comboCount === 2) damage = 15;
+    if (comboCount === 3) damage = 25; // final hit powerful
+
+
+    attacks.push({ 
+        x: attacker.x + 50, 
+        y: attacker.y + 60, 
+        dir: dir, 
+        owner: owner, 
+        type: type, 
+        angle: 0,
+        damage: damage,
+        combo: comboCount
+        
+    });
+}
+
+function rasengan() {
+    // --- DAMAGE LOCK: Character hit state-la amukuna drop loop trigger aagadhu ---
+    if(p1.chakra < 40 || myChar !== "naruto" || !gameRunning || p1.isHitState) return;
+    p1.chakra -= 40;
+    p1.attacking = true; 
+    p1.frame = 0;         
+    sounds.rasengan.play();
+    createAttack("p1", "rasengan");
+}
+
+function chidori() {
+    // --- DAMAGE LOCK ---
+    if(p1.chakra < 40 || myChar !== "sasuke" || !gameRunning || p1.isHitState) return;
+    p1.chakra -= 40;
+    p1.attacking = true;
+    p1.frame = 0;
+    sounds.chidori.play();
+    createAttack("p1", "chidori");
+}
+
+
+function bot() {
+    // --- STRICT BOT DAMAGE FREEZE LOCK: Bot mela special hit patta avan absolute lock, endha attack/move-um panna koodathu ---
+    if (!gameRunning || sharinganCinematic || p2.isHitState) {
+        p2.vx = 0; 
+        p2.attacking = false;
+        return;
+    }
+        
+    let speed, attackChance, specialChance, reactionDist, superPowerChance;
+    
+    // Difficulty settings
+    if (difficulty === "easy") { 
+        speed = 6; attackChance = 0.052; specialChance = 0.009; reactionDist = 340; superPowerChance = 0.005; 
+    } else if (difficulty === "medium") { 
+        speed = 6; attackChance = 0.06; specialChance = 0.015; reactionDist = 450; superPowerChance = 0.01; 
+    } else { 
+        speed = 9; attackChance = 0.1; specialChance = 0.04; reactionDist = 800; superPowerChance = 0.02; 
+    }
+
+    // --- CHANGE: MAXIMUM DISTANCE (Innum thalli) ---
+    // Bot ippo unga kitta 450px gap maintain pannum
+    p2.vx = 0; 
+    if (p2.x < p1.x - 450) { 
+        p2.vx = speed; 
+    } else if (p2.x > p1.x + 450) { 
+        p2.vx = -speed; 
+    }
+
+    // Dodge Logic
+    for(let i = 0; i < attacks.length; i++) {
+        let a = attacks[i];
+        if (a.owner === "p1") {
+            let dist = Math.abs(a.x - p2.x);
+            if (dist < reactionDist && !p2.jumping) {
+                let threshold = (difficulty === "hard") ? 0.95 : (difficulty === "medium" ? 0.75 : 0.55); 
+                if (Math.random() < threshold) { 
+                    p2.vy = -13; 
+                    p2.jumping = true; 
+                }
+            }
+        }
+    }
+
+    // --- CHANGE: LONG RANGE ATTACK ---
+    // 550px dhoorathulaye bot attack pannidum
+    let currentDist = Math.abs(p2.x - p1.x);
+    if (currentDist < 550 && Math.random() < attackChance && !p2.attacking) {
+        p2.attacking = true;
+        p2.frame = 0; 
+        createAttack("p2", "normal");
+    }
+
+    // Special Skills
+    if (p2.chakra >= 40 && Math.random() < specialChance && !p2.attacking) { 
+        p2.chakra -= 40;
+        p2.attacking = true;
+        p2.frame = 0;
+        let type = (enemyChar === "naruto") ? "rasengan" : "chidori";
+        createAttack("p2", type);
+        if(sounds[type]) { sounds[type].currentTime = 0; sounds[type].play(); }
+    }
+
+    // Super Powers
+    if (Math.random() < superPowerChance) { 
+        if (enemyChar === "naruto") { shadowClone("p2"); } 
+        else { 
+            activateSharingan("p2"); 
+            if (enemyChar === "sasuke" && Math.random() < 0.02) useFireball("p2");
+        }
+    }
+}
+
+
+function drawImageRotated(img, x, y, width, height, angle) {
+    ctx.save(); ctx.translate(x + width / 2, y + height / 2); ctx.rotate(angle);
+    ctx.drawImage(img, -width / 2, -height / 2, width, height); ctx.restore();
+}
+
+function nextRound(winner) {
+    gameRunning = false; 
+    showCharacters = false; 
+    cancelAnimationFrame(loopId);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    let winnerName = (winner === "p1") ? myChar : enemyChar;
+
+    // Logic for Cloud Saving
+    if (winner === "p1") {
+        p1Wins++; 
+        // Firebase Realtime Database-kku data anupuroom
+        saveProgress(); 
+    } else {
+        p2Wins++;
+    }
+
+    // Audio and UI Logic
+    if(winnerName === "naruto") { 
+        sounds.winNaruto.currentTime = 0; 
+        sounds.winNaruto.play(); 
+    } else { 
+        sounds.winSasuke.currentTime = 0; 
+        sounds.winSasuke.play(); 
+    }
+
+    let rd = document.getElementById("roundDisplay");
+    let rt = document.getElementById("roundText");
+    let rw = document.getElementById("winnerRoundImg");
+    
+    document.getElementById("roundHeaderContainer").style.display = "none";
+    rt.innerText = winnerName.toUpperCase() + " WINS ROUND!";
+    rw.src = winnerName + "round.png"; 
+    rw.style.display = "block"; 
+    rd.style.display = "flex";
+
+    setTimeout(() => {
+        if(p1Wins === 2 || p2Wins === 2) {
+            rd.style.display = "none";
+            document.getElementById("winnerText").innerText = (p1Wins === 2) ? "VICTORIOUS: YOU! 🏆" : "DEFEATED: BOT! 💀";
+            document.getElementById("endScreen").style.display = "block";
+        } else { 
+            currentRound++; 
+            reset(); 
+            startGame(); 
+        }
+    }, 3000);
+}
+
+
+function loop(time) {
+    if (!gameRunning) return;
+    if (comboTimer > 0) {
+    comboTimer--;
+} else {
+    comboCount = 0;
+}
+
+    const elapsed = time - lastFrameTime;
+    const fpsInterval = 1000 / gameFPS;
+
+    if (!allAssetsReady) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText("Loading assets...", canvas.width/2 - 120, canvas.height/2);
+    ctx.fillStyle = "rgba(255,0,0,0.3)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    return;
+}
+
+    if (elapsed > fpsInterval) {
+        lastFrameTime = time - (elapsed % fpsInterval);
+        
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Screen Shake Logic
+        if (shakeAmount > 0) {
+            let dx = (Math.random() - 0.5) * shakeAmount;
+            let dy = (Math.random() - 0.5) * shakeAmount;
+            ctx.translate(dx, dy);
+            shakeAmount *= 0.9;
+            if (shakeAmount < 0.5) shakeAmount = 0;
+        }
+
+        if (sharinganCinematic) {
+            cinematicTimer++;
+            // 1. Dark Background
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; 
+            ctx.fillRect(-50, -50, canvas.width + 100, canvas.height + 100);
+            
+            let attacker = (cinematicAttacker === "p1") ? p1 : p2;
+            let victim = (cinematicAttacker === "p1") ? p2 : p1;
+
+            if (cinematicStep === 0) { 
+                attacker.x = victim.x + (attacker.x < victim.x ? -70 : 70);
+                attacker.y = victim.y;
+                cinematicStep = 1;
+                cinematicTimer = 0;
+            } else if (cinematicStep === 1) { 
+                // 2. Full Screen Flash (Light Red)
+                if (cinematicTimer % 20 < 10) {
+                     ctx.fillStyle = "rgba(255, 0, 0, 0.15)"; 
+                     ctx.fillRect(-50, -50, canvas.width + 100, canvas.height + 100);
+                     triggerShake(10); 
+                }
+
+                // 3. Draw Sword
+                ctx.drawImage(swordImg, attacker.x, victim.y, 110, 160);
+                
+                // --- SHARINGAN CINEMATIC SAFETY (STEP 1) ---
+// Victim (Bot) image-ah draw panrom
+let vicImg = charSprites[victim.name][victim.state][victim.frame];
+
+// MUKKIYAM: Image full-ah load aagi irundhaal mattum draw pannu (Stuck aagaratha thadukka)
+if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
+    ctx.save();
+    ctx.drawImage(vicImg, victim.x, victim.y, 110, 160);
+    
+    // Blood scatter logic (Already unga code-la irukkura logic)
+    if (cinematicTimer % 15 < 8) {
+        ctx.fillStyle = "rgba(200, 0, 0, 0.9)";
+        for(let i = 0; i < 15; i++) {
+            ctx.beginPath();
+            let scatterX = victim.x + 55 + (Math.random() * 80 - 40); 
+            let scatterY = victim.y + 100 + (Math.random() * 80 - 40);
+            ctx.arc(scatterX, scatterY, Math.random() * 8 + 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    ctx.restore();
+} else {
+    // Oru velai image load aagalaina, safety-kaga light red box draw pannu
+    ctx.fillStyle = "rgba(255, 0, 0, 0.2)";
+    ctx.fillRect(victim.x, victim.y, 110, 160);
+}
+
+                if (cinematicTimer > 90) { 
+                    victim.health -= 140;
+                    triggerShake(15);
+                    sharinganCinematic = false;
+                    cinematicStep = 0;
+                    cinematicTimer = 0;
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+        }
+         else {
+            // Player Movement Update
+            p1.vx = 0;
+
+            // --- STRICT PLAYER DAMAGE FREEZE LOCK: Un mela special attack patta nee key amukunalum character move aagadhu, loop sariyaa run aagum ---
+            if (p1.isHitState) {
+                p1.vx = 0;
+                p1.vy = 0;
+            } else {
+                if (keys.left) p1.vx = -8;
+                if (keys.right) p1.vx = 8;
+            }
+
+            // Bot Logic
+            bot();
+
+
+            // Update All Ninjas
+            [p1, p2].forEach(p => {
+                p.update(); // Update physics and animation state
+                p.x = Math.max(0, Math.min(canvas.width - 110, p.x));
+                if (p.chakra < 100) p.chakra += 0.12;
+            });
+
+            // --- FIXED: RED WARNING DYNAMIC BLINK LOGIC ---
+if (p1.health < 200) {
+    // Smooth pulse scaling calculations via performance counter
+    let blinkOpacity = 0.07 + Math.sin(performance.now() / 150) * 0.07;
+    ctx.fillStyle = "rgba(255, 0, 0, " + blinkOpacity + ")";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+            // --- STEP 4: HIDE CHARACTER DURING FIREBALL ---
+// Step 4 kitta irukkura draw logic-ai ippadi mathunga
+if (showCharacters) {
+    let isP1Fireball = attacks.some(a => a.owner === "p1" && a.type === "fireball");
+    let isP2Fireball = attacks.some(a => a.owner === "p2" && a.type === "fireball");
+
+    if (p1.chakra >= 100) {
+    ctx.fillStyle = "cyan";
+    ctx.font = "20px Arial";
+    ctx.fillText("ULTIMATE READY!", 500, 80);
+}
+
+    // Tails Mode-la irukkum podhu Naruto-va draw panna maattom (Vanish effect)
+    if (!isP1Fireball && !p1.isTailsMode) p1.draw(p2.x); 
+    if (!isP2Fireball) p2.draw(p1.x);
+}        }
+
+    if (p1.isTailsMode) {
+    p1.tailsTimer++;
+    
+    // Animation Speed Control
+    if (p1.tailsTimer % 5 === 0) {
+        // Frame 5-la mattum 25 frames (approx 0.4s) stuck aagi nirkka intha logic
+        if (p1.tailsFrame === 5) {
+            if (!p1.stuckCounter) p1.stuckCounter = 0;
+            p1.stuckCounter++;
+            
+            if (p1.stuckCounter >= 5) { // 5 cycles of 5 frames = 25 frames
+                p1.tailsFrame = 6;
+                p1.stuckCounter = 0;
+            }
+        } else {
+            p1.tailsFrame++;
+        }
+    }
+
+    // Direction Lock
+    if (p1.tailsFrame === 1 && !p1.currentDir) {
+        p1.currentDir = (p2.x > p1.x) ? 1 : -1; 
+    }
+    
+    let currentImg = tailsSprites[p1.tailsFrame - 1]; 
+    let target = p2;
+
+    const drawTails = (img, x, y, w, h) => {
+        if (!img || !img.complete) return;
+        ctx.save();
+        if (p1.currentDir === -1) {
+            ctx.translate(x + w, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, 0, 0, w, h);
+        } else {
+            ctx.drawImage(img, x, y, w, h);
+        }
+        ctx.restore();
+    };
+
+    // --- 4-TAILS SEQUENCE LOGIC ---
+
+    // 1. Frames 1 to 5: Transformation Start (Ore idathula)
+    if (p1.tailsFrame <= 5) {
+        drawTails(currentImg, p1.x - 25, p1.y - 40, 160, 160);
+    } 
+    
+    // 2. Frames 6 to 7: Offset Position (Size 50% Reduced: 80x80)
+    else if (p1.tailsFrame >= 6 && p1.tailsFrame <= 7) {
+        let offset = p1.x + (p1.currentDir * 120); 
+        // 160-la irundhu 80x80-ku size koraichu, ground-ku adjust panna y+25 kuduthurukan
+        drawTails(currentImg, offset, p1.y + 25, 80, 80);
+    }
+
+    // 3. Frames 8 to 13: Attack Launch
+    else if (p1.tailsFrame >= 8 && p1.tailsFrame <= 13) {
+        p1.tailsMoveDist = (p1.tailsMoveDist || 120) + (p1.currentDir * 22); 
+        let moveX = p1.x + p1.tailsMoveDist;
+        
+        let attackSize = (p1.tailsFrame === 8 || p1.tailsFrame === 9) ? 64 : 80;
+        let yPos = (p1.tailsFrame === 8 || p1.tailsFrame === 9) ? p1.y + 35 : p1.y + 25;
+
+        drawTails(currentImg, moveX, yPos, attackSize, attackSize);
+        
+        if (Math.abs(moveX - (target.x + 40)) < 55) {
+            target.health -= 70; 
+
+            // 4-TAILS SPL IMPACT ENGINE INTERCEPT
+            target.isHitState = true;
+            target.frame = 0;
+            target.frameTimer = 0;
+            target.stagger = 10; // Rapid shake framerate override
+
+            triggerShake(15);
+            p1.tailsFrame = 14; 
+            p1.tailsMoveDist = 0;
+        }
+    }
+
+
+    // 4. Frames 14 to 18: Final Vanish
+    else if (p1.tailsFrame >= 14 && p1.tailsFrame <= 18) {
+        drawTails(currentImg, p1.x - 25, p1.y - 40, 160, 160);
+    }
+
+    // 5. Reset
+    else {
+        p1.isTailsMode = false;
+        p1.tailsFrame = 0;
+        p1.tailsTimer = 0;
+        p1.tailsMoveDist = 0;
+        p1.currentDir = null;
+        p1.stuckCounter = 0;
+    }
+}
+
+
+
+        
+      // Shadow Clones Logic inside Loop
+for (let i = clones.length - 1; i >= 0; i--) {
+    let c = clones[i];
+    c.life--;
+
+    let target = (c.owner === "p1") ? p2 : p1;
+    let distance = Math.abs(c.x - target.x);
+    
+    // Movement Logic
+    if (distance > 50) {
+        if (c.x < target.x) c.x += 6; else c.x -= 6;
+        c.state = 'run';
+    } else {
+        c.state = 'attack';
+        target.health -= 0.4; // Clone attack damage
+    }
+
+    // Drawing the Clone
+    let frames = charSprites["naruto"][c.state];
+    if (frames && frames.length > 0) {
+        let fIdx = Math.floor(performance.now() / 120) % frames.length;
+        let img = frames[fIdx];
+        
+        // MUKKIYAM: Image load aagi iruntha mattum draw pannu
+        if (img && img.complete && img.naturalWidth !== 0) {
+            ctx.save();
+            ctx.globalAlpha = 0.7; 
+            if (c.x > target.x) {
+                ctx.scale(-1, 1);
+                ctx.drawImage(img, -c.x - 110, c.y, 110, 160);
+            } else {
+                ctx.drawImage(img, c.x, c.y, 110, 160);
+            }
+            ctx.restore();
+        }
+    }
+
+    if (c.life <= 0) clones.splice(i, 1);
+}
+ctx.globalAlpha = 1.0; // Reset Alpha
+
+
+
+        // Projectile Attacks Logic
+        // --- FIXED: Continuous firing trigger flag safety conditions check matching ---
+        if (isFiring && !sharinganCinematic && !p1.isHitState) {
+            fireCounter++;
+            if (fireCounter >= 15) { // 5-la irundhu 15-ku mathuna animation smooth-ah theriyum
+                p1.attacking = true;
+                p1.frame = 0;
+                createAttack("p1"); 
+                fireCounter = 0; 
+            }
+        }
+
+        // --- STEP 2: REPLACING THE ENTIRE PROJECTILE LOOP (LINE 1461 AREA) ---
+        for (let i = attacks.length - 1; i >= 0; i--) {
+            let a = attacks[i];
+
+            // --- FIX: FIREBALL7.PNG POSE PERSISTENCE ---
+if (a.type === "fireball") {
+    a.timer++;
+    
+    // Animation Speed (5 frames oru image-ku)
+    if (a.timer % 5 === 0) {
+        a.frame++; 
+    }
+
+    // 1. DRAWING LOGIC
+    if (a.frame < 11) { 
+        let currentFImg = fireballSprites[a.frame];
+        
+        // --- SASUKE POSE: ALWAYS FIREBALL7.PNG ---
+        // Frame 7-la irundhu 11 varai, Sasuke-voda pose 'fireball7.png' mattum thaan irukkanum
+        if (a.frame >= 6) { // 6th index is fireball7.png
+            let poseImg = fireballSprites[6]; // <--- DIRECT FIX: fireball7.png
+            if (poseImg && poseImg.complete) {
+                ctx.save();
+                if (a.dir === -1) {
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(poseImg, -a.launchPosX - 150, a.launchPosY - 50, 150, 150);
+                } else {
+                    ctx.drawImage(poseImg, a.launchPosX - 75, a.launchPosY - 50, 150, 150);
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- MOVING FIRE: Images 8 to 11 ---
+        // Frame 7 mela poga poga fire mattum move aagum
+        if (a.frame >= 7 && currentFImg && currentFImg.complete) {
+            ctx.save();
+            if (a.dir === -1) {
+                ctx.scale(-1, 1);
+                ctx.drawImage(currentFImg, -a.x - 150, a.y - 50, 150, 150);
+            } else {
+                ctx.drawImage(currentFImg, a.x - 75, a.y - 50, 150, 150);
+            }
+            ctx.restore();
+        } 
+        // Charging phase (1 to 6) - Sasuke kailaye fire show aagum
+        else if (a.frame < 7 && currentFImg && currentFImg.complete) {
+            ctx.save();
+            if (a.dir === -1) {
+                ctx.scale(-1, 1);
+                ctx.drawImage(currentFImg, -a.x - 150, a.y - 50, 150, 150);
+            } else {
+                ctx.drawImage(currentFImg, a.x - 75, a.y - 50, 150, 150);
+            }
+            ctx.restore();
+        }
+    } else {
+        // 11th frame mudinja udane ellame vanish aagi Sasuke reappear aavaaru
+        attacks.splice(i, 1); 
+        continue;
+    }
+
+    // 2. POSITION LOCK & MOVEMENT
+    if (a.frame >= 6) { // Frame 7 (index 6) vandha udane position lock
+        if (!a.launchPosX) {
+            let attacker = (a.owner === "p1") ? p1 : p2;
+            a.launchPosX = attacker.x + (a.dir === 1 ? 50 : -50);
+            a.launchPosY = attacker.y + 20;
+            a.x = a.launchPosX; 
+            a.y = a.launchPosY;
+        }
+        
+        // Fire move aaga start pannum (Frame 7 index-ku mela)
+        if (a.frame >= 7) {
+            a.x += a.dir * 20; 
+        }
+    } else {
+        // Initial Charging
+        let attacker = (a.owner === "p1") ? p1 : p2;
+        a.x = attacker.x + (a.dir === 1 ? 50 : -50); 
+        a.y = attacker.y + 20;
+    }
+
+    // 3. DAMAGE WITH HIT BOUNDARY DETECTION LOCKS
+        let target = (a.owner === "p1") ? p2 : p1;
+        if (a.frame >= 7 && Math.abs(a.x - (target.x + 55)) < 75) {
+            target.health -= a.damage || 10; 
+            
+            // Fireball target contact trigger sets
+            target.isHitState = true;
+            target.frame = 0;
+            target.frameTimer = 0;
+            target.stagger = 7; // Smooth quick take damage rendering speed
+            
+            triggerShake(5);
+        }
+        continue; 
+    }
+
+
+
+            // 2. NORMAL PROJECTILES MOVEMENT (Rasengan, Chidori, Kunai)
+            if (!sharinganCinematic) a.x += a.dir * 17;
+            
+            if (a.type === "rasengan") { 
+                drawImageRotated(rasenganImg, a.x-29, a.y-29, 58, 58, a.angle+=0.3);
+            } else if (a.type === "chidori") { 
+                drawImageRotated(chidoriImg, a.x-36, a.y-36, 72, 72, a.angle+=0.4);
+            } else {
+                // KUNAI DRAWING (S3 Safety Logic)
+                if (kunaiImg && kunaiImg.complete && kunaiImg.naturalWidth !== 0) {
+                    ctx.save();
+                    if (a.dir === -1) {
+                        ctx.scale(-1, 1);
+                        ctx.drawImage(kunaiImg, -a.x - 30, a.y - 12.5, 60, 25);
+                    } else {
+                        ctx.drawImage(kunaiImg, a.x - 30, a.y - 12.5, 60, 25);
+                    }
+                    ctx.restore();
+                }
+            }
+
+           // Damage and Cleanup with Precise Position Freeze Interception
+        let target = (a.owner === "p1") ? p2 : p1;
+
+        // Enemy boundary check distance metrics
+        let targetCenterDistance = Math.abs(a.x - (target.x + 55));
+
+        if (targetCenterDistance < 55 && Math.abs(a.y - (target.y + 80)) < 80) {
+            let dmg = (a.type === "rasengan") ? 75 : (a.type === "chidori") ? 70 : 15;
+            target.health -= dmg;
+
+            // SPECIAL CONTACT ENGINE: Triggered on Rasengan/Chidori hits impact frames instantly
+            if (a.type === "rasengan" || a.type === "chidori") {
+                target.isHitState = true; 
+                target.vx = 0;
+                target.vy = 0;
+                target.frame = 0;
+                target.frameTimer = 0;
+                // Stagger speed values are dynamically scaled inside Ninja.update loop rules now
+            }
+
+            triggerShake(a.type === "normal" ? 4 : 14);
+            attacks.splice(i, 1);
+            continue;
+        }
+
+            if (a.x < -100 || a.x > canvas.width + 100) attacks.splice(i, 1);
+        }
+        
+        // Update Health and Chakra UI
+        document.getElementById("h1").style.width = Math.max(0, (p1.health/maxHealth)*100) + "%";
+        document.getElementById("h2").style.width = Math.max(0, (p2.health/maxHealth)*100) + "%";
+        document.getElementById("c1").style.width = p1.chakra + "%";
+        document.getElementById("c2").style.width = p2.chakra + "%";
+        
+        if (p1.health <= 0 || p2.health <= 0) nextRound(p1.health > 0 ? "p1" : "p2");
+    }
+
+    loopId = requestAnimationFrame(loop);
+}
+
+function playAgain() { document.getElementById("endScreen").style.display = "none"; p1Wins = 0; p2Wins = 0; currentRound = 1; reset(); startGame(); }
+function exitGame() {
+    // 1. Force state stops immediately
+    gameRunning = false;
+    showCharacters = false;
+    isPaused = false;
+    cancelAnimationFrame(loopId);
+    
+    // 2. Hide Pause Menu screen layout instantly if active
+    document.getElementById("pauseScreen").style.display = "none";
+
+    // 3. Complete sound stack reset (All running audio tracks frozen immediately)
+    Object.values(sounds).forEach(sound => {
+        sound.pause();
+        sound.currentTime = 0;
+    });
+
+    // 4. Reset character data locks to prevent background actions processing
+    p1 = { chakra: 0 };
+    p2 = { chakra: 0 };
+    attacks = [];
+    clones = [];
+    keys = { left: false, right: false }; // Clear active key movements freeze
+
+    // 5. Hide Battle UI and Core Mobile Controls HUD completely from Home Screen
+    document.getElementById("game").style.display = "none";
+    document.getElementById("ui").style.display = "none";
+    document.getElementById("mobileControls").style.display = "none"; // <--- FIXED: Home screen-la key visibility block panniduvom
+    document.getElementById("endScreen").style.display = "none";
+    document.getElementById("roundDisplay").style.display = "none";
+    
+    // 6. Restore Main Menu Landing Screen View Panels
+    document.getElementById("startScreen").style.display = "block";
+    document.getElementById("mainMenuButtons").style.display = "block";
+    document.querySelector("#startScreen h1").style.display = "block";
+    document.getElementById("modeSelect").style.display = "none"; 
+    document.getElementById("charSelect").style.display = "none";
+    document.getElementById("difficultySelect").style.display = "none";
+    document.getElementById("shippudenMenu").style.display = "none";
+    
+    // 7. Reset Background Graphics filter layers
+    const bg = document.getElementById("bg");
+    bg.style.backgroundImage = "url('bg1.jpg')"; 
+    bg.style.filter = "brightness(0.6)";
+    
+    loadUserData(); 
+}
+
+// Auth State Change
+auth.onAuthStateChanged((user) => {
+    const authOverlay = document.getElementById('authOverlay');
+    if (user) {
+        if(user.emailVerified) {
+            authOverlay.style.display = 'none'; 
+            document.getElementById('startScreen').style.display = 'block';
+            loadUserData(); 
+        } else {
+            authOverlay.style.display = 'flex';
+            document.getElementById('authError').innerText = "Please verify your email to continue.";
+        }
+    } else {
+        authOverlay.style.display = 'flex';
+    }
+});
+
+
+
+</script>
+</body>
+</html>
