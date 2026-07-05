@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Naruto Ultimate - Extreme Pro Edition</title>
+    <title>Shinobi Ultimate - Naruto vs Sasuke</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
         
         
@@ -14,18 +17,39 @@
             --glass: rgba(255, 255, 255, 0.15);
             --dark-glass: rgba(0, 0, 0, 0.7);
             --glow: 0 0 15px var(--primary);
+            --font-display: 'Bebas Neue', sans-serif;
+            --font-body: 'Rajdhani', 'Segoe UI', sans-serif;
         }
 
         body { 
             margin: 0; 
             overflow: hidden; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: var(--font-body); 
+            font-weight: 600;
             color: white; 
             text-align: center; 
             background: #000; 
             touch-action: none;
             -webkit-user-select: none;
             user-select: none;
+        }
+
+        h1, h2, h3, .shippuden-heading, #roundText {
+            font-family: var(--font-display);
+            letter-spacing: 2px;
+        }
+
+        button {
+            font-family: var(--font-body);
+        }
+
+        /* --- SCREEN ENTRANCE ANIMATION (plays automatically whenever display switches to block/flex) --- */
+        @keyframes screenFadeIn {
+            from { opacity: 0; transform: translate(-50%, -46%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen, #shippudenMenu, #pauseScreen {
+            animation: screenFadeIn 0.4s ease;
         }
 
 
@@ -167,13 +191,6 @@ canvas {
         /* Dynamic Title Adjustment configurations maps */
         #startScreen h1 {
             margin-top: 5px !important;
-            margin-bottom: 15px !important;
-            font-size: clamp(24px, 6vw, 48px) !important; 
-        }
-
-        /* Dynamic Title Adjustment configurations maps */
-        #startScreen h1 {
-            margin-top: 5px !important;
             margin-bottom: 10px !important;
             font-size: clamp(24px, 6vw, 48px) !important; /* Mobile adaptive typography scaling rules */
         }
@@ -258,14 +275,19 @@ canvas {
             backdrop-filter: blur(8px); 
             text-transform: uppercase; 
             letter-spacing: 1px; 
-            transition: 0.3s ease;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         button:hover { 
             background: var(--secondary); 
-            transform: scale(1.05); 
+            transform: scale(1.05) translateY(-2px); 
             box-shadow: 0 0 20px var(--primary); 
+        }
+
+        button:active {
+            transform: scale(0.97) translateY(0);
+            transition: all 0.08s ease;
         }
 
         .back-btn { background: rgba(127, 140, 141, 0.7); }
@@ -330,6 +352,35 @@ canvas {
             box-shadow: 0 0 10px #3498db; 
             width: 0%; 
             transition: width 0.3s; 
+        }
+
+        /* --- DAMAGE FLASH: briefly flashes the health bar red on hit --- */
+        @keyframes damageFlash {
+            0% { filter: brightness(1); }
+            30% { filter: brightness(2.2) saturate(2); background: #ff3b3b; }
+            100% { filter: brightness(1); }
+        }
+        .health.dmg-flash {
+            animation: damageFlash 0.35s ease;
+        }
+
+        /* --- CRITICAL HEALTH: bar shifts from green to an urgent pulsing red/orange when low --- */
+        @keyframes healthCriticalPulse {
+            0%, 100% { box-shadow: 0 0 14px #ff3b3b; }
+            50% { box-shadow: 0 0 26px 4px #ff7a3b; }
+        }
+        .health.health-critical {
+            background: linear-gradient(90deg, #ff3b3b, #ff9d3b);
+            animation: healthCriticalPulse 1s ease-in-out infinite;
+        }
+
+        /* --- CHAKRA FULL: pulsing glow once the bar is maxed, signalling "special ready" --- */
+        @keyframes chakraFullPulse {
+            0%, 100% { box-shadow: 0 0 10px #3498db; }
+            50% { box-shadow: 0 0 22px 4px #5dd6ff; }
+        }
+        .chakra.chakra-full {
+            animation: chakraFullPulse 1s ease-in-out infinite;
         }
 
         /* --- SHIPPUDEN MENU STYLING --- */
@@ -411,10 +462,311 @@ canvas {
         }
 
         .score { font-size: 16px; color: #fff; font-weight: 900; }
-    </style>
+/* ================================================================
+   AAA CINEMATIC OVERHAUL — richer palette, energy atmosphere,
+   angular ninja-styled panels/buttons, dramatic typography
+   ================================================================ */
+
+:root {
+    --bg-deep: #05060a;
+    --bg-panel: #0d0f16;
+    --chakra-cyan: #33e0ff;
+    --energy-red: #ff3b3b;
+    --gold: #ffd166;
+}
+
+body {
+    background: radial-gradient(ellipse at 50% 20%, #1a0f08 0%, var(--bg-deep) 55%, #000 100%);
+}
+
+/* Ambient cinematic backdrop: slow-drifting energy glow + vignette */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 20% 15%, rgba(255,107,26,0.16), transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(51,224,255,0.10), transparent 45%),
+        radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.75) 100%);
+    animation: ambientDrift 14s ease-in-out infinite alternate;
+}
+@keyframes ambientDrift {
+    from { filter: hue-rotate(0deg) brightness(1); }
+    to   { filter: hue-rotate(8deg) brightness(1.08); }
+}
+
+/* Floating ember particles container (populated by JS) */
+#emberField {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.ember {
+    position: absolute;
+    bottom: -10px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffdca8, var(--primary) 60%, transparent 100%);
+    box-shadow: 0 0 6px 2px rgba(255,140,20,0.6);
+    animation-name: emberRise;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    opacity: 0;
+}
+@keyframes emberRise {
+    0%   { transform: translateY(0) translateX(0); opacity: 0; }
+    10%  { opacity: 0.9; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-100vh) translateX(var(--drift, 30px)); opacity: 0; }
+}
+
+/* --- Cinematic title treatment --- */
+#startScreen h1 {
+    font-size: clamp(40px, 9vw, 84px) !important;
+    letter-spacing: 6px !important;
+    background: linear-gradient(180deg, #fff7e6 0%, var(--primary) 55%, var(--energy-red) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 18px rgba(255,140,20,0.65)) drop-shadow(0 0 40px rgba(255,60,20,0.3));
+    position: relative;
+}
+#startScreen h1::after {
+    content: "";
+    display: block;
+    width: min(70%, 380px);
+    height: 3px;
+    margin: 14px auto 30px;
+    background: linear-gradient(90deg, transparent, var(--chakra-cyan), var(--primary), transparent);
+    box-shadow: 0 0 12px var(--primary);
+}
+
+/* --- Angular ninja-styled buttons (clip-path kunai-edge look) --- */
+button {
+    position: relative;
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    background: linear-gradient(135deg, rgba(243,156,18,0.95), rgba(180,60,20,0.95));
+    border: none;
+    padding: 14px 34px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+button::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+}
+button:hover::before { left: 130%; }
+button:hover {
+    background: linear-gradient(135deg, var(--gold), var(--energy-red));
+    box-shadow: 0 0 28px rgba(255,140,20,0.7), inset 0 0 0 1px rgba(255,255,255,0.3);
+}
+.back-btn {
+    background: linear-gradient(135deg, #3b4048, #1c2024) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08) !important;
+}
+.quit-btn {
+    background: linear-gradient(135deg, var(--danger), #7a1c14) !important;
+}
+
+/* --- Character select: cinematic hero cards instead of plain buttons --- */
+#charSelect {
+    background: 
+        radial-gradient(circle at 50% -10%, rgba(255,140,20,0.16), transparent 60%),
+        linear-gradient(160deg, rgba(22,24,30,0.72), rgba(8,9,13,0.68));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 
+        0 0 60px rgba(255,140,20,0.12),
+        0 25px 60px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+    padding: 38px 24px !important;
+    overflow: hidden;
+}
+#charSelect::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 16%; right: 16%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--chakra-cyan), var(--primary), transparent);
+    box-shadow: 0 0 14px var(--primary);
+}
+#charSelect h3 {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 5vw, 38px);
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-shadow: 0 0 16px rgba(255,209,102,0.6);
+    margin-bottom: 22px;
+}
+#charSelect button:not(.back-btn) {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 220px;
+    padding: 22px 18px;
+    margin: 12px 14px;
+    font-size: 19px;
+    clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
+    background: linear-gradient(160deg, rgba(20,22,28,0.9), rgba(10,11,15,0.95));
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.char-portrait {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 0 14px rgba(255,140,20,0.35);
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+#charSelect button:not(.back-btn):hover .char-portrait {
+    border-color: var(--primary);
+    box-shadow: 0 0 22px rgba(255,140,20,0.7);
+    transform: scale(1.08);
+}
+#charSelect button:not(.back-btn):hover {
+    transform: translateY(-6px) scale(1.04);
+    border-color: var(--primary);
+    box-shadow: 0 0 30px rgba(255,140,20,0.55), 0 14px 34px rgba(0,0,0,0.7);
+    background: linear-gradient(160deg, rgba(50,30,15,0.95), rgba(15,10,8,0.95));
+}
+
+/* --- Difficulty select: rank-styled panels --- */
+#difficultySelect button:not(.back-btn) {
+    display: block;
+    width: 260px;
+    margin: 10px auto;
+    text-align: left;
+    padding: 16px 26px;
+    font-size: 16px;
+}
+
+/* --- Mission cards (Shippuden) cinematic polish --- */
+.mission-card {
+    background: linear-gradient(160deg, #1c1a15, #0c0c0a) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+}
+.mission-card.active:hover {
+    box-shadow: 0 0 26px rgba(243,156,18,0.55), 0 14px 34px rgba(0,0,0,0.7) !important;
+}
+.play-mission-btn { clip-path: none !important; }
+.locked-mission-btn { clip-path: none !important; }
+
+/* --- Battle HUD: premium name-plates & VS energy divider --- */
+.bar-container {
+    background: linear-gradient(160deg, rgba(15,12,10,0.9), rgba(5,5,6,0.92));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,140,20,0.08);
+}
+.name-tag {
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: 2px;
+}
+#roundText {
+    font-size: clamp(46px, 9vw, 72px);
+    background: linear-gradient(180deg, #fff, var(--primary) 60%, var(--energy-red));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 20px rgba(255,120,20,0.6));
+}
+
+/* --- Settings / pause panels: sharper premium glass --- */
+.settings-panel {
+    background: linear-gradient(160deg, rgba(15,13,11,0.92), rgba(6,6,7,0.95));
+    box-shadow: 0 20px 50px rgba(0,0,0,0.65), inset 0 0 0 1px rgba(255,140,20,0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before { animation: none; }
+    .ember { display: none; }
+}
+
+/* --- ACHIEVEMENT TOAST --- */
+.achievement-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translate(-50%, -30px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(20,18,14,0.96), rgba(8,7,6,0.98));
+    border: 1px solid var(--gold);
+    box-shadow: 0 0 24px rgba(255,209,102,0.5), 0 10px 26px rgba(0,0,0,0.6);
+    padding: 12px 22px;
+    border-radius: 6px;
+    z-index: 5000;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+}
+.achievement-toast.show { opacity: 1; transform: translate(-50%, 0); }
+.achievement-toast .ach-icon { font-size: 26px; filter: drop-shadow(0 0 8px var(--gold)); }
+.achievement-toast .ach-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+.achievement-toast .ach-name { font-family: var(--font-display); font-size: 18px; letter-spacing: 1px; color: #fff; }
+
+/* --- BLOCK BUTTON (mobile) --- */
+#btnBlock {
+    color: #33e0ff !important;
+    border-color: #33e0ff !important;
+}
+
+/* --- KEY REMAP ROW --- */
+.remap-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 13px;
+}
+.remap-key-btn {
+    min-width: 70px;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    background: #2b2f36 !important;
+}
+.remap-key-btn.listening {
+    background: var(--primary) !important;
+    animation: chakraFullPulse 0.6s ease-in-out infinite;
+}
+
+</style>
 </head>
 
 <body>
+
+<div id="emberField"></div>
+
+<!-- --- CHAKRA LOADING SCREEN: shown while sprites/sounds load, hides the raw asset pop-in --- -->
+<div id="loadingScreen" style="position: fixed; inset: 0; z-index: 2000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <div style="font-family: var(--font-display); font-size: 42px; letter-spacing: 3px; color: var(--primary); text-shadow: 0 0 20px var(--primary); margin-bottom: 25px;">SHINOBI ULTIMATE</div>
+    <div style="width: 260px; height: 14px; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; overflow: hidden;">
+        <div id="loadingBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #3498db, var(--primary)); box-shadow: 0 0 12px var(--primary); transition: width 0.2s ease;"></div>
+    </div>
+    <div id="loadingText" style="margin-top: 14px; font-size: 14px; letter-spacing: 2px; color: #aaa;">GATHERING CHAKRA... 0%</div>
+</div>
 
 <!-- Mobile Screen Orientation Responsive Protection Overlay Layer -->
 <div id="orientationOverlay">
@@ -442,12 +794,13 @@ canvas {
   <button id="btnN" class="m-btn" style="position: absolute; bottom: 10%; right: 21%; color: #f1c40f; border-color: #f1c40f;" ontouchstart="shadowClone('p1')">N</button>
   <button id="btnFire" class="m-btn btn-fire" style="position: absolute; bottom: 8%; right: 12%;" ontouchstart="if(myChar==='sasuke') useFireball('p1')">🔥</button>
   <button id="btnS" class="m-btn" style="position: absolute; bottom: 24%; right: 4%; color: #e74c3c; border-color: #e74c3c;" ontouchstart="activateSharingan('p1')">S</button>
+  <button id="btnBlock" class="m-btn" style="position: absolute; bottom: 12%; left: 32%;" ontouchstart="startBlock()" ontouchend="stopBlock()">🛡️</button>
 </div>
 
 <div id="bg"></div>
 
 <div id="startScreen">
-  <h1 style="font-size: 48px; text-shadow: 0 0 20px red; color: gold; margin: 0 0 10px 0;">🔥 NARUTO ULTIMATE 🔥</h1>
+  <h1>SHINOBI ULTIMATE</h1>
   
   <!-- Content wrapper inside flexbox alignments limits bounds setup map -->
   <div id="mainMenuButtons" style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%;">
@@ -489,6 +842,19 @@ canvas {
 
         <hr style="border: 0.5px solid #444; margin: 20px 0;">
 
+        <div style="text-align: left;">
+            <div style="font-size: 13px; letter-spacing: 1px; color: var(--gold); margin-bottom: 8px;">KEY BINDINGS (click, then press a key)</div>
+            <div class="remap-row"><span>Jump</span><button class="remap-key-btn" id="remap-jump" onclick="beginRemap('jump')">SPACE</button></div>
+            <div class="remap-row"><span>Rasengan</span><button class="remap-key-btn" id="remap-rasengan" onclick="beginRemap('rasengan')">E</button></div>
+            <div class="remap-row"><span>Chidori</span><button class="remap-key-btn" id="remap-chidori" onclick="beginRemap('chidori')">Q</button></div>
+            <div class="remap-row"><span>Shadow Clone</span><button class="remap-key-btn" id="remap-clone" onclick="beginRemap('clone')">N</button></div>
+            <div class="remap-row"><span>Sharingan</span><button class="remap-key-btn" id="remap-sharingan" onclick="beginRemap('sharingan')">S</button></div>
+            <div class="remap-row"><span>Fireball</span><button class="remap-key-btn" id="remap-fireball" onclick="beginRemap('fireball')">F</button></div>
+            <div class="remap-row"><span>Block</span><button class="remap-key-btn" id="remap-block" onclick="beginRemap('block')">C</button></div>
+        </div>
+
+        <hr style="border: 0.5px solid #444; margin: 20px 0;">
+
         <div class="setting-row">
             <span style="color: #aaa; font-size: 14px;">NINJA SESSION</span>
             <button onclick="handleLogout()" style="background: var(--danger); padding: 8px 18px; font-size: 12px; border: 1px solid white;">LOGOUT</button>
@@ -500,8 +866,8 @@ canvas {
 
 <div id="charSelect">
     <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">CHOOSE YOUR NINJA</h3>
-    <button onclick="chooseChar('naruto')">Naruto Uzumaki</button>
-    <button onclick="chooseChar('sasuke')">Sasuke Uchiha</button>
+    <button onclick="chooseChar('naruto')"><img src="rnaruto.png" class="char-portrait" onerror="this.style.display='none'"><span>Naruto Uzumaki</span></button>
+    <button onclick="chooseChar('sasuke')"><img src="rsasuke.png" class="char-portrait" onerror="this.style.display='none'"><span>Sasuke Uchiha</span></button>
     <br>
     <button class="back-btn" onclick="goBack('start')">⬅ Return</button>
 </div>
@@ -549,6 +915,7 @@ canvas {
 
 <div id="endScreen">
  <h1 id="winnerText" style="font-size: 35px; text-shadow: 0 0 15px gold;"></h1>
+ <img id="endScreenPortrait" style="display:none; width: 200px; height: auto; margin: 6px 0 18px; filter: drop-shadow(0 0 20px var(--primary));" onerror="this.style.display='none'">
  <button onclick="playAgain()">🔄 Rematch</button>
  <button onclick="exitGame()">❌ Main Menu</button>
 </div>
@@ -608,6 +975,29 @@ canvas {
 
 
 
+// --- CINEMATIC EMBER PARTICLES: lightweight ambient atmosphere, purely decorative ---
+(function spawnEmbers() {
+    const field = document.getElementById("emberField");
+    if (!field) return;
+    const EMBER_COUNT = 26;
+    for (let i = 0; i < EMBER_COUNT; i++) {
+        const ember = document.createElement("div");
+        ember.className = "ember";
+        const left = Math.random() * 100;
+        const duration = 7 + Math.random() * 9;
+        const delay = Math.random() * 12;
+        const drift = (Math.random() * 80 - 40) + "px";
+        const size = 2 + Math.random() * 3;
+        ember.style.left = left + "vw";
+        ember.style.width = size + "px";
+        ember.style.height = size + "px";
+        ember.style.setProperty("--drift", drift);
+        ember.style.animationDuration = duration + "s";
+        ember.style.animationDelay = delay + "s";
+        field.appendChild(ember);
+    }
+})();
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const maxHealth = 800;
@@ -624,8 +1014,8 @@ const characterAssets = {
 };
 
 const assets = {
-    naruto: { stance: 4, run: 6, jump: 3, attack: 7, takingdamage: 8 },
-    sasuke: { stance: 4, run: 6, jump: 3, attack: 4, takingdamage: 8 }
+    naruto: { stance: 4, run: 6, jump: 3, attack: 7 },
+    sasuke: { stance: 4, run: 6, jump: 3, attack: 4 }
 };
 
 // 1. Single Image Assets
@@ -641,9 +1031,23 @@ let allAssetsReady = false;
 
 function imageLoaded() {
     imagesLoaded++;
+
+    const pct = totalImages > 0 ? Math.min(100, Math.round((imagesLoaded / totalImages) * 100)) : 100;
+    const bar = document.getElementById("loadingBar");
+    const txt = document.getElementById("loadingText");
+    if (bar) bar.style.width = pct + "%";
+    if (txt) txt.innerText = "GATHERING CHAKRA... " + pct + "%";
+
     if (imagesLoaded >= totalImages) {
         allAssetsReady = true;
         console.log("SHINOBI READY: All assets loaded!");
+
+        const loadingScreen = document.getElementById("loadingScreen");
+        if (loadingScreen) {
+            loadingScreen.style.transition = "opacity 0.5s ease";
+            loadingScreen.style.opacity = "0";
+            setTimeout(() => { loadingScreen.style.display = "none"; }, 500);
+        }
     }
 }
 
@@ -707,7 +1111,53 @@ let fireCounter = 0, isFiring = false;
 let difficulty = "easy", currentRound = 1, p1Wins = 0, p2Wins = 0;
 let p1 = { chakra: 0 }, p2 = { chakra: 0 }, attacks = [];
 let clones = [];
+let hitSparks = []; // Impact particle bursts spawned on every successful hit
 let keys = {};
+
+// --- CONFIGURABLE KEY BINDINGS (persisted so remaps survive a refresh) ---
+let keyBindings = {
+    jump: " ", rasengan: "e", chidori: "q", clone: "n",
+    sharingan: "s", fireball: "f", tails: "b", block: "c"
+};
+(function loadKeyBindings() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("shinobiKeyBindings"));
+        if (saved) keyBindings = Object.assign(keyBindings, saved);
+    } catch (e) { /* ignore corrupt storage */ }
+})();
+function saveKeyBindings() {
+    try { localStorage.setItem("shinobiKeyBindings", JSON.stringify(keyBindings)); } catch (e) {}
+}
+let remapListenerActive = null; // action name currently awaiting a keypress, or null
+
+// --- ACHIEVEMENTS ---
+const ACHIEVEMENTS = {
+    firstBlood:   { name: "First Blood",        desc: "Win your first match" },
+    flawless:     { name: "Flawless Victory",   desc: "Win a match without taking damage" },
+    ultimateSpam: { name: "Chakra Master",      desc: "Land 3 ultimates (Rasengan/Chidori) in one match" },
+    parryKing:    { name: "Iron Wall",          desc: "Block 5 hits in a single match" }
+};
+let matchStats = { tookDamage: false, ultimatesLanded: 0, blocksLanded: 0 };
+function loadUnlockedAchievements() {
+    try { return JSON.parse(localStorage.getItem("shinobiAchievements")) || {}; }
+    catch (e) { return {}; }
+}
+function unlockAchievement(key) {
+    const unlocked = loadUnlockedAchievements();
+    if (unlocked[key]) return; // already unlocked
+    unlocked[key] = true;
+    try { localStorage.setItem("shinobiAchievements", JSON.stringify(unlocked)); } catch (e) {}
+    showAchievementToast(ACHIEVEMENTS[key]);
+}
+function showAchievementToast(ach) {
+    if (!ach) return;
+    const toast = document.createElement("div");
+    toast.className = "achievement-toast";
+    toast.innerHTML = `<div class="ach-icon">🏆</div><div><div class="ach-title">Achievement Unlocked</div><div class="ach-name">${ach.name}</div></div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 20);
+    setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 500); }, 4000);
+}
 let comboCount = 0;
 let comboTimer = 0;
 let comboDelay = 25; // frames gap
@@ -718,6 +1168,7 @@ let gameFPS = 60;
 let lastFrameTime = 0;
 let isCustomizing = false;
 let shakeAmount = 0;
+let ultimateZoom = { active: false, timer: 0, x: 0, y: 0, prevFPS: null, target: null };
 
 // Assets loading kitta ithai add pannunga
 const tailsSprites = [];
@@ -748,12 +1199,25 @@ function loadFireball() {
 }
 loadFireball();
 
+// Safety net: if any image 404s and never fires onload, don't trap the player behind
+// the loading screen forever — force it to hide after 6s no matter what.
+setTimeout(() => {
+    const loadingScreen = document.getElementById("loadingScreen");
+    if (loadingScreen && loadingScreen.style.display !== "none") {
+        console.warn("Some assets may not have loaded — continuing anyway.");
+        allAssetsReady = true;
+        loadingScreen.style.transition = "opacity 0.5s ease";
+        loadingScreen.style.opacity = "0";
+        setTimeout(() => { loadingScreen.style.display = "none"; }, 500);
+    }
+}, 6000);
+
 
 // --- FIREBALL JUTSU (STEP 1: HIDE ATTACKER) ---
 function useFireball(owner) {
     let p = (owner === "p1") ? p1 : p2;
     // --- DAMAGE LOCK: Character adi vaangumpodhu fireball poda koodathu ---
-    if(!p || p.chakra < 50 || !gameRunning || sharinganCinematic || p.isHitState) return;
+    if(!p || p.chakra < 50 || !gameRunning || sharinganCinematic) return;
 
     p.chakra -= 50;
     
@@ -800,35 +1264,19 @@ class Ninja {
         this.tailsFrame = 0;
         this.tailsTimer = 0;
         this.lastGoodImg = null; // <--- ITHU KANDIPPA IRUKKANUM
+        this.trail = []; // Motion-blur afterimage history (run/attack states)
+        this.isBlocking = false;
     }
 
     update() {
-// --- INTENSE IMPACT INTERCEPT: Physics & Gravity Lock ---
-if (this.isHitState) {
-    this.state = 'takingdamage';
-    this.vx = 0; 
-    this.vy = 0; 
-    this.attacking = false; // Pure animation lock: Forces attack states to false instantly
-} else {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.vy += 0.6; 
-    if(this.y >= 440) { this.y = 440; this.vy = 0; this.jumping = false; }
-}
+// --- Physics & Gravity: always runs normally, a hit never freezes movement anymore ---
+this.x += this.vx;
+this.y += this.vy;
+this.vy += 0.6; 
+if(this.y >= 440) { this.y = 440; this.vy = 0; this.jumping = false; }
 
-if (this.isHitState) {
-    this.state = 'takingdamage';
-    
-    // --- UPDATED SPECIAL PERCENTAGE ANIME SLOW-MO STAGGER ENGINE ---
-    // Baseline delay logic is 12 frames gap.
-    // Sasuke: 10% Slow = 12 * 1.10 = 13.2 -> Math.round is 13 frames delay.
-    // Naruto: 20% Slow = 12 * 1.20 = 14.4 -> Math.round is 14 frames delay.
-    if (this.name === 'sasuke') {
-        this.stagger = 13; 
-    } else if (this.name === 'naruto') {
-        this.stagger = 14;
-    }
-} else if (this.attacking) {
+// --- State selection: always the normal pose, a hit never changes this anymore ---
+if (this.attacking) {
     this.state = 'attack';
 } else if (this.jumping) {
     this.state = 'jump';
@@ -841,16 +1289,17 @@ if (this.isHitState) {
 let frames = charSprites[this.name][this.state];
 if (!frames || frames.length === 0) return;
 
+// --- MOTION TRAIL: capture a short afterimage history during run/attack for a "juicier" feel ---
+if (this.state === 'run' || this.state === 'attack') {
+    this.trail.push({ x: this.x, y: this.y, frame: this.frame, state: this.state });
+    if (this.trail.length > 4) this.trail.shift();
+} else if (this.trail.length) {
+    this.trail.shift(); // fade the trail out gently when the character stops
+}
+
 this.frameTimer++;
 if (this.frameTimer % this.stagger === 0) {
     this.frame = (this.frame + 1) % frames.length;
-
-    // Reset hit state blocks after exact 8 frames execution finishes smoothly
-    if (this.state === 'takingdamage' && this.frame === frames.length - 1) {
-        this.isHitState = false; 
-        this.frame = 0;
-        this.stagger = 12; // Reset baseline timing speed safely
-    }
 
     if (this.state === 'attack' && this.frame === frames.length - 1) {
         this.attacking = false;
@@ -883,24 +1332,178 @@ draw(enemyX) {
     let frames = charSprites[this.name][this.state];
     let img = frames[this.frame];
 
+    // --- MOTION TRAIL: draw faded afterimages behind the character (run/attack juice) ---
+    for (let i = 0; i < this.trail.length; i++) {
+        const t = this.trail[i];
+        const tFrames = charSprites[this.name][t.state];
+        if (!tFrames) continue;
+        const tImg = tFrames[t.frame];
+        if (!(tImg && tImg.complete && tImg.naturalWidth !== 0)) continue;
+        ctx.save();
+        ctx.globalAlpha = 0.10 * (i + 1);
+        if (t.x > enemyX) {
+            ctx.scale(-1, 1);
+            ctx.drawImage(tImg, -t.x - 110, t.y, 110, 160);
+        } else {
+            ctx.drawImage(tImg, t.x, t.y, 110, 160);
+        }
+        ctx.restore();
+    }
+
     // MUKKIYAM: S3/Docker loading safety logic
     if (img && img.complete && img.naturalWidth !== 0) { 
         ctx.save();
         ctx.globalAlpha = 1.0; // Main character eppothum 100% theriya force panroom
+
+        // --- SQUASH & STRETCH: subtle stretch on the way up, squash on landing — sells the jump ---
+        let stretchX = 1, stretchY = 1;
+        if (this.jumping) {
+            const v = Math.max(-14, Math.min(14, this.vy));
+            if (v < 0) { stretchY = 1 + Math.min(0.14, -v * 0.012); stretchX = 1 - Math.min(0.08, -v * 0.008); }
+            else { stretchY = 1 - Math.min(0.10, v * 0.010); stretchX = 1 + Math.min(0.08, v * 0.008); }
+        }
+
+        // --- HIT ZOOM: only the character taking damage visually punches-in bigger, never the attacker ---
+        if (ultimateZoom.active && ultimateZoom.target === this) {
+            const progress = ultimateZoom.timer / (ultimateZoom.maxTimer || 24);
+            const zoomAmt = 1 + (ultimateZoom.strength || 0.22) * Math.sin(progress * Math.PI);
+            stretchX *= zoomAmt;
+            stretchY *= zoomAmt;
+        }
         
         if (this.x > enemyX) {
             ctx.scale(-1, 1);
-            ctx.drawImage(img, -this.x - 110, this.y, 110, 160);
+            ctx.translate(-this.x - 55, this.y + 160);
+            ctx.scale(stretchX, stretchY);
+            ctx.drawImage(img, -55, -160, 110, 160);
         } else {
-            ctx.drawImage(img, this.x, this.y, 110, 160);
+            ctx.translate(this.x + 55, this.y + 160);
+            ctx.scale(stretchX, stretchY);
+            ctx.drawImage(img, -55, -160, 110, 160);
         }
         ctx.restore();
     } else {
         // Image ready-ah illana console-la message kaattum (Debugging)
         if(img) console.warn("Waiting for " + this.name + " assets...");
     }
+
+    // --- BLOCK SHIELD VISUAL: translucent cyan barrier while guarding ---
+    if (this.isBlocking) {
+        ctx.save();
+        ctx.globalAlpha = 0.55 + 0.15 * Math.sin(Date.now() / 90);
+        ctx.strokeStyle = "#33e0ff";
+        ctx.lineWidth = 3;
+        ctx.shadowColor = "#33e0ff";
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.ellipse(this.x + 55, this.y + 80, 62, 85, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
  }
 }
+// --- UI POLISH HELPERS ---
+function flashDamage(targetPlayer) {
+    const id = (targetPlayer === p1) ? 'h1' : 'h2';
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('dmg-flash');
+    void el.offsetWidth; // restart animation even if already flashing
+    el.classList.add('dmg-flash');
+}
+
+// --- HIT SPARKS: small glowing burst spawned at the impact point on every hit ---
+// --- BLOCK-AWARE DAMAGE: call this instead of "target.health -= dmg" directly.
+// Returns the actual damage applied, and tracks match stats/achievements for p1 blocking. ---
+function applyBlockableDamage(target, rawDamage, hitX, hitY, isSpecial) {
+    if (target.isBlocking) {
+        const reduced = Math.round(rawDamage * 0.2); // blocking absorbs 80% of the hit
+        target.health -= reduced;
+        spawnBlockSpark(hitX, hitY);
+        if (target === p1) {
+            matchStats.blocksLanded++;
+            if (matchStats.blocksLanded >= 5) unlockAchievement("parryKing");
+        }
+        return reduced;
+    }
+
+    target.health -= rawDamage;
+    flashDamage(target);
+    spawnHitSpark(hitX, hitY);
+    if (target === p1) matchStats.tookDamage = true;
+    if (isSpecial && target !== p1) {
+        matchStats.ultimatesLanded++;
+        if (matchStats.ultimatesLanded >= 3) unlockAchievement("ultimateSpam");
+    }
+
+    // Zoom effect is reserved for special moves (rasengan/chidori/fireball/four-tails) — normal kunai hits just get the hit-spark
+    // Zoom is applied only to the character taking the hit, never the attacker
+    if (isSpecial) triggerUltimateZoom(hitX, hitY, 1, target);
+    return rawDamage;
+}
+
+function spawnBlockSpark(x, y) {
+    for (let i = 0; i < 8; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 3;
+        hitSparks.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 0.5,
+            life: 14, maxLife: 14,
+            size: 1.5 + Math.random() * 2,
+            color: "120,220,255"
+        });
+    }
+}
+
+function spawnHitSpark(x, y) {
+    const count = 12;
+    for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 5;
+        hitSparks.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1,
+            life: 18 + Math.random() * 10,
+            maxLife: 28,
+            size: 2 + Math.random() * 3,
+            color: Math.random() < 0.5 ? "255,180,60" : "255,90,40"
+        });
+    }
+}
+
+function updateAndDrawHitSparks() {
+    for (let i = hitSparks.length - 1; i >= 0; i--) {
+        const s = hitSparks[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.25; // slight gravity pull
+        s.vx *= 0.94;
+        s.life--;
+
+        if (s.life <= 0) { hitSparks.splice(i, 1); continue; }
+
+        const alpha = Math.max(0, s.life / s.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = `rgba(${s.color},${alpha})`;
+        ctx.shadowColor = `rgba(${s.color},0.9)`;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+function updateChakraGlow(playerId, chakraValue) {
+    const el = document.getElementById(playerId);
+    if (!el) return;
+    el.classList.toggle('chakra-full', chakraValue >= 100);
+}
+
 function handleLogout() {
     if(confirm("Are you sure you want to leave the Hidden Leaf Village, Ninja?")) {
         auth.signOut().then(() => {
@@ -1082,6 +1685,7 @@ function toggleSettings(show) {
     // Start screen-ah hide/show panni overlap aagaratha thadukkurom
     document.getElementById("startScreen").style.display = show ? "none" : "block";
     document.getElementById("settingsScreen").style.display = show ? "block" : "none";
+    if (show) syncRemapLabels();
 }
 
 function showShippudenMenu() {
@@ -1105,7 +1709,7 @@ function setFPS(val) {
 }
 
 // --- DYNAMIC DRAG ENGINE (MOBILE TOUCH + LAPTOP MOUSE FULL SUPPORT) ---
-const mobBtnIds = ["btnLeft", "btnRight", "btnC1", "btnC2", "btnJump", "btnN", "btnFire", "btnS"];
+const mobBtnIds = ["btnLeft", "btnRight", "btnC1", "btnC2", "btnJump", "btnN", "btnFire", "btnS", "btnBlock"];
 
 function makeElementCustomDraggable(id) {
     const el = document.getElementById(id);
@@ -1349,6 +1953,7 @@ function setDifficulty(level) {
     document.getElementById("bg").style.backgroundImage = "url('bg.jpg')"; 
     document.getElementById("bg").style.filter = "brightness(0.4)";
     p1Wins = 0; p2Wins = 0; currentRound = 1;
+    matchStats = { tookDamage: false, ultimatesLanded: 0, blocksLanded: 0 };
     reset(); 
     startGame();
 }
@@ -1450,6 +2055,23 @@ function triggerShake(intensity) {
     shakeAmount = intensity;
 }
 
+// --- CINEMATIC ZOOM: brief punch-in zoom + slow-mo on any clean hit.
+// intensity 1 = full ultimate punch, smaller values (e.g. 0.4) = a quick snappy punch for normal hits ---
+function triggerUltimateZoom(x, y, intensity, target) {
+    intensity = (typeof intensity === "number") ? intensity : 1;
+    if (ultimateZoom.active) return; // don't stack multiple zooms
+    ultimateZoom.prevFPS = gameFPS;
+    // Only slow the game down noticeably for stronger hits; small hits keep near-full speed
+    gameFPS = Math.max(15, Math.round(gameFPS - (gameFPS * 0.5 * intensity)));
+    ultimateZoom.active = true;
+    ultimateZoom.timer = Math.max(6, Math.round(24 * intensity));
+    ultimateZoom.maxTimer = ultimateZoom.timer;
+    ultimateZoom.strength = 0.10 + 0.12 * intensity;
+    ultimateZoom.x = x;
+    ultimateZoom.y = y;
+    ultimateZoom.target = target || null; // only this character visually zooms, never the attacker
+}
+
 function togglePause(pauseState) {
     if (!gameRunning && !isPaused) return; // Battle nadakkala na pause trigger aagadhu
 
@@ -1481,11 +2103,15 @@ function togglePause(pauseState) {
 
 // --- Controls ---
 document.addEventListener("keydown", e => {
-    // --- DAMAGE INPUT INTERCEPT: Un character adi vaangumbodhu endha action keys press pannunaalum control actions return aagidum ---
-    if (p1 && p1.isHitState) {
-        if(e.key=="a" || e.key=="d" || e.key==" " || e.key=="w" || e.key=="e" || e.key=="q" || e.key=="n" || e.key=="s" || e.key=="f" || e.key=="b") {
-            return; 
-        }
+    // --- KEY REMAP CAPTURE: if the settings screen is waiting for a new key, grab it here first ---
+    if (remapListenerActive) {
+        e.preventDefault();
+        keyBindings[remapListenerActive] = e.key;
+        saveKeyBindings();
+        const btn = document.getElementById("remap-" + remapListenerActive);
+        if (btn) btn.textContent = displayKeyName(e.key);
+        remapListenerActive = null;
+        return;
     }
 
     if(e.key=="a") keys.left = true;
@@ -1496,19 +2122,20 @@ document.addEventListener("keydown", e => {
             togglePause(!isPaused);
         }
     }
-    if(e.key==" ") jump();
-    if(e.key=="w") isFiring = true;
-    if(e.key=="e") rasengan(); 
-    if(e.key=="q") chidori();
-    if(e.key=="n") shadowClone("p1"); 
-    if(e.key=="s") activateSharingan("p1");    if(e.key=="f") {
+    if(e.key===keyBindings.jump) jump();
+    if(e.key===keyBindings.block) startBlock();
+    if(e.key==="w") isFiring = true;
+    if(e.key===keyBindings.rasengan) rasengan(); 
+    if(e.key===keyBindings.chidori) chidori();
+    if(e.key===keyBindings.clone) shadowClone("p1"); 
+    if(e.key===keyBindings.sharingan) activateSharingan("p1");    if(e.key===keyBindings.fireball) {
     if(myChar === "sasuke") {
         useFireball("p1");
     } else {
         console.log("Naruto cannot use Fireball!");
     }
 }
-if(e.key === "b") {
+if(e.key === keyBindings.tails) {
     if(myChar === "naruto" && !p1.isTailsMode && p1.chakra >= 50) {
         p1.isTailsMode = true;
         p1.tailsFrame = 0;
@@ -1524,7 +2151,37 @@ document.addEventListener("keyup", e => {
     if(e.key=="a") keys.left = false;
     if(e.key=="d") keys.right = false;
     if(e.key=="w") isFiring = false;
+    if(e.key===keyBindings.block) stopBlock();
 });
+
+function displayKeyName(k) {
+    if (k === " ") return "SPACE";
+    return k.toUpperCase();
+}
+
+function beginRemap(action) {
+    // cancel any other listening button's visual state first
+    document.querySelectorAll(".remap-key-btn.listening").forEach(b => b.classList.remove("listening"));
+    remapListenerActive = action;
+    const btn = document.getElementById("remap-" + action);
+    if (btn) { btn.classList.add("listening"); btn.textContent = "PRESS KEY..."; }
+}
+
+function syncRemapLabels() {
+    Object.keys(keyBindings).forEach(action => {
+        const btn = document.getElementById("remap-" + action);
+        if (btn) btn.textContent = displayKeyName(keyBindings[action]);
+    });
+}
+
+// --- BLOCK / PARRY MECHANIC ---
+function startBlock() {
+    if (!gameRunning || !p1 || p1.jumping || p1.attacking) return;
+    p1.isBlocking = true;
+}
+function stopBlock() {
+    if (p1) p1.isBlocking = false;
+}
 
 function shadowClone(owner) {
     // 'p' character object-ah sariyaa edukka
@@ -1579,12 +2236,12 @@ function activateSharingan(owner) {
 }
 
 
-function startMove(dir) { if(isCustomizing || p1.isHitState) return; if(dir === 'left') keys.left = true; if(dir === 'right') keys.right = true; }
+function startMove(dir) { if(isCustomizing) return; if(dir === 'left') keys.left = true; if(dir === 'right') keys.right = true; }
 function stopMove(dir) { if(dir === 'left') keys.left = false; if(dir === 'right') keys.right = false; }
 
 function startFire() { 
     // --- STRICT ATTACK LOCK: Adi padumpodhu standard continuous basic screen triggers lock ---
-    if(!gameRunning || p1.attacking || p1.isHitState) return; 
+    if(!gameRunning || p1.attacking) return; 
     
     isFiring = true;      
     p1.attacking = true;
@@ -1630,7 +2287,7 @@ function createAttack(owner, type = "normal") {
 
 function rasengan() {
     // --- DAMAGE LOCK: Character hit state-la amukuna drop loop trigger aagadhu ---
-    if(p1.chakra < 40 || myChar !== "naruto" || !gameRunning || p1.isHitState) return;
+    if(p1.chakra < 40 || myChar !== "naruto" || !gameRunning) return;
     p1.chakra -= 40;
     p1.attacking = true; 
     p1.frame = 0;         
@@ -1640,7 +2297,7 @@ function rasengan() {
 
 function chidori() {
     // --- DAMAGE LOCK ---
-    if(p1.chakra < 40 || myChar !== "sasuke" || !gameRunning || p1.isHitState) return;
+    if(p1.chakra < 40 || myChar !== "sasuke" || !gameRunning) return;
     p1.chakra -= 40;
     p1.attacking = true;
     p1.frame = 0;
@@ -1651,40 +2308,59 @@ function chidori() {
 
 function bot() {
     // --- STRICT BOT DAMAGE FREEZE LOCK: Bot mela special hit patta avan absolute lock, endha attack/move-um panna koodathu ---
-    if (!gameRunning || sharinganCinematic || p2.isHitState) {
+    if (!gameRunning || sharinganCinematic) {
         p2.vx = 0; 
         p2.attacking = false;
+        p2.isBlocking = false;
         return;
     }
-        
-    let speed, attackChance, specialChance, reactionDist, superPowerChance;
-    
-    // Difficulty settings
+
+    // --- DIFFICULTY TIERS: each level plays like a genuinely different skill tier, not just tweaked numbers.
+    // Easy = beginner (no blocking, no retreating, slow to punish). Medium = decent player (blocks sometimes, backs off when hurt).
+    // Hard = sharp player (blocks often, punishes your attack recovery, saves chakra for real openings, retreats early to avoid trading badly). ---
+    let speed, attackChance, specialChance, reactionDist, superPowerChance, blockChance, punishBonus, spacing, retreatHealthPct;
     if (difficulty === "easy") { 
-        speed = 6; attackChance = 0.052; specialChance = 0.009; reactionDist = 340; superPowerChance = 0.005; 
+        speed = 5; attackChance = 0.045; specialChance = 0.007; reactionDist = 260; superPowerChance = 0.004;
+        blockChance = 0; punishBonus = 0; spacing = 380; retreatHealthPct = 0;
     } else if (difficulty === "medium") { 
-        speed = 6; attackChance = 0.06; specialChance = 0.015; reactionDist = 450; superPowerChance = 0.01; 
+        speed = 6.5; attackChance = 0.07; specialChance = 0.016; reactionDist = 420; superPowerChance = 0.01;
+        blockChance = 0.25; punishBonus = 0.05; spacing = 420; retreatHealthPct = 0.2;
     } else { 
-        speed = 9; attackChance = 0.1; specialChance = 0.04; reactionDist = 800; superPowerChance = 0.02; 
+        speed = 8.5; attackChance = 0.11; specialChance = 0.03; reactionDist = 620; superPowerChance = 0.018;
+        blockChance = 0.55; punishBonus = 0.14; spacing = 460; retreatHealthPct = 0.35;
     }
 
-    // --- CHANGE: MAXIMUM DISTANCE (Innum thalli) ---
-    // Bot ippo unga kitta 450px gap maintain pannum
-    p2.vx = 0; 
-    if (p2.x < p1.x - 450) { 
-        p2.vx = speed; 
-    } else if (p2.x > p1.x + 450) { 
-        p2.vx = -speed; 
+    // Auto-release the bot's guard after a short window so it's not a permanent shield
+    if (p2.isBlocking) {
+        p2.blockTimer = (p2.blockTimer || 0) - 1;
+        if (p2.blockTimer <= 0) p2.isBlocking = false;
     }
 
-    // Dodge Logic
+    let currentDist = Math.abs(p2.x - p1.x);
+
+    // --- SPACING: keep an ideal fight distance; higher tiers also create space when losing instead of trading blindly ---
+    p2.vx = 0;
+    if (!p2.isBlocking) {
+        if (p2.x < p1.x - spacing) { 
+            p2.vx = speed; 
+        } else if (p2.x > p1.x + spacing) { 
+            p2.vx = -speed; 
+        } else if (retreatHealthPct > 0 && p2.health < 800 * retreatHealthPct && currentDist < spacing) {
+            p2.vx = (p2.x < p1.x) ? -speed : speed;
+        }
+    }
+
+    // --- DEFENSIVE REACTION: dodge or block incoming attacks depending on skill tier ---
     for(let i = 0; i < attacks.length; i++) {
         let a = attacks[i];
         if (a.owner === "p1") {
             let dist = Math.abs(a.x - p2.x);
-            if (dist < reactionDist && !p2.jumping) {
-                let threshold = (difficulty === "hard") ? 0.95 : (difficulty === "medium" ? 0.75 : 0.55); 
-                if (Math.random() < threshold) { 
+            if (dist < reactionDist && !p2.jumping && !p2.isBlocking) {
+                let dodgeThreshold = (difficulty === "hard") ? 0.95 : (difficulty === "medium" ? 0.75 : 0.55); 
+                if (blockChance > 0 && Math.random() < blockChance) {
+                    p2.isBlocking = true;
+                    p2.blockTimer = 20;
+                } else if (Math.random() < dodgeThreshold) { 
                     p2.vy = -13; 
                     p2.jumping = true; 
                 }
@@ -1692,23 +2368,26 @@ function bot() {
         }
     }
 
-    // --- CHANGE: LONG RANGE ATTACK ---
-    // 550px dhoorathulaye bot attack pannidum
-    let currentDist = Math.abs(p2.x - p1.x);
-    if (currentDist < 550 && Math.random() < attackChance && !p2.attacking) {
+    // --- OFFENSE: punish the player's attack recovery window with a bonus to attack chance (bigger bonus on higher tiers) ---
+    let effectiveAttackChance = attackChance + (p1.attacking ? punishBonus : 0);
+    if (currentDist < 550 && Math.random() < effectiveAttackChance && !p2.attacking && !p2.isBlocking) {
         p2.attacking = true;
         p2.frame = 0; 
         createAttack("p2", "normal");
     }
 
-    // Special Skills
-    if (p2.chakra >= 40 && Math.random() < specialChance && !p2.attacking) { 
-        p2.chakra -= 40;
-        p2.attacking = true;
-        p2.frame = 0;
-        let type = (enemyChar === "naruto") ? "rasengan" : "chidori";
-        createAttack("p2", type);
-        if(sounds[type]) { sounds[type].currentTime = 0; sounds[type].play(); }
+    // --- Special Skills: higher tiers hold chakra for a real window instead of throwing it away at long range ---
+    if (p2.chakra >= 40 && !p2.attacking && !p2.isBlocking) {
+        let wantsSpecial = Math.random() < specialChance;
+        if (difficulty === "hard") wantsSpecial = wantsSpecial && currentDist < 500;
+        if (wantsSpecial) {
+            p2.chakra -= 40;
+            p2.attacking = true;
+            p2.frame = 0;
+            let type = (enemyChar === "naruto") ? "rasengan" : "chidori";
+            createAttack("p2", type);
+            if(sounds[type]) { sounds[type].currentTime = 0; sounds[type].play(); }
+        }
     }
 
     // Super Powers
@@ -1767,7 +2446,16 @@ function nextRound(winner) {
         if(p1Wins === 2 || p2Wins === 2) {
             rd.style.display = "none";
             document.getElementById("winnerText").innerText = (p1Wins === 2) ? "VICTORIOUS: YOU! 🏆" : "DEFEATED: BOT! 💀";
+            const endPortrait = document.getElementById("endScreenPortrait");
+            const finalWinnerChar = (p1Wins === 2) ? myChar : enemyChar;
+            endPortrait.src = finalWinnerChar + "round.png";
+            endPortrait.style.display = "block";
             document.getElementById("endScreen").style.display = "block";
+
+            if (p1Wins === 2) {
+                unlockAchievement("firstBlood");
+                if (!matchStats.tookDamage) unlockAchievement("flawless");
+            }
         } else { 
             currentRound++; 
             reset(); 
@@ -1812,6 +2500,17 @@ function loop(time) {
             ctx.translate(dx, dy);
             shakeAmount *= 0.9;
             if (shakeAmount < 0.5) shakeAmount = 0;
+        }
+
+        // Cinematic slow-mo timing (any special hit slows the game briefly).
+        // The visual zoom itself is applied only to the character taking damage, inside their own draw() — never a whole-screen zoom that also enlarges the attacker.
+        if (ultimateZoom.active) {
+            ultimateZoom.timer--;
+            if (ultimateZoom.timer <= 0) {
+                ultimateZoom.active = false;
+                ultimateZoom.target = null;
+                if (ultimateZoom.prevFPS) { gameFPS = ultimateZoom.prevFPS; ultimateZoom.prevFPS = null; }
+            }
         }
 
         if (sharinganCinematic) {
@@ -1880,14 +2579,8 @@ if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
             // Player Movement Update
             p1.vx = 0;
 
-            // --- STRICT PLAYER DAMAGE FREEZE LOCK: Un mela special attack patta nee key amukunalum character move aagadhu, loop sariyaa run aagum ---
-            if (p1.isHitState) {
-                p1.vx = 0;
-                p1.vy = 0;
-            } else {
-                if (keys.left) p1.vx = -8;
-                if (keys.right) p1.vx = 8;
-            }
+            if (keys.left) p1.vx = -8;
+            if (keys.right) p1.vx = 8;
 
             // Bot Logic
             bot();
@@ -1900,11 +2593,16 @@ if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
                 if (p.chakra < 100) p.chakra += 0.12;
             });
 
-            // --- FIXED: RED WARNING DYNAMIC BLINK LOGIC ---
+            // --- LOW HEALTH VIGNETTE: edges pulse red while the center (where the action is) stays clear ---
 if (p1.health < 200) {
-    // Smooth pulse scaling calculations via performance counter
-    let blinkOpacity = 0.07 + Math.sin(performance.now() / 150) * 0.07;
-    ctx.fillStyle = "rgba(255, 0, 0, " + blinkOpacity + ")";
+    let pulse = 0.35 + Math.sin(performance.now() / 150) * 0.15;
+    let vignette = ctx.createRadialGradient(
+        canvas.width / 2, canvas.height / 2, canvas.height * 0.32,
+        canvas.width / 2, canvas.height / 2, canvas.width * 0.62
+    );
+    vignette.addColorStop(0, "rgba(180,0,0,0)");
+    vignette.addColorStop(1, "rgba(180,0,0," + pulse + ")");
+    ctx.fillStyle = vignette;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -1923,6 +2621,7 @@ if (showCharacters) {
     // Tails Mode-la irukkum podhu Naruto-va draw panna maattom (Vanish effect)
     if (!isP1Fireball && !p1.isTailsMode) p1.draw(p2.x); 
     if (!isP2Fireball) p2.draw(p1.x);
+    updateAndDrawHitSparks();
 }        }
 
     if (p1.isTailsMode) {
@@ -1990,13 +2689,7 @@ if (showCharacters) {
         drawTails(currentImg, moveX, yPos, attackSize, attackSize);
         
         if (Math.abs(moveX - (target.x + 40)) < 55) {
-            target.health -= 70; 
-
-            // 4-TAILS SPL IMPACT ENGINE INTERCEPT
-            target.isHitState = true;
-            target.frame = 0;
-            target.frameTimer = 0;
-            target.stagger = 10; // Rapid shake framerate override
+            applyBlockableDamage(target, 70, target.x + 55, target.y + 60, true);
 
             triggerShake(15);
             p1.tailsFrame = 14; 
@@ -2069,7 +2762,7 @@ ctx.globalAlpha = 1.0; // Reset Alpha
 
         // Projectile Attacks Logic
         // --- FIXED: Continuous firing trigger flag safety conditions check matching ---
-        if (isFiring && !sharinganCinematic && !p1.isHitState) {
+        if (isFiring && !sharinganCinematic) {
             fireCounter++;
             if (fireCounter >= 15) { // 5-la irundhu 15-ku mathuna animation smooth-ah theriyum
                 p1.attacking = true;
@@ -2165,15 +2858,10 @@ if (a.type === "fireball") {
     // 3. DAMAGE WITH HIT BOUNDARY DETECTION LOCKS
         let target = (a.owner === "p1") ? p2 : p1;
         if (a.frame >= 7 && Math.abs(a.x - (target.x + 55)) < 75) {
-            target.health -= a.damage || 10; 
+            const wasBlocking = target.isBlocking;
+            applyBlockableDamage(target, a.damage || 10, target.x + 55, target.y + 60, true);
             
-            // Fireball target contact trigger sets
-            target.isHitState = true;
-            target.frame = 0;
-            target.frameTimer = 0;
-            target.stagger = 7; // Smooth quick take damage rendering speed
-            
-            triggerShake(5);
+            triggerShake(wasBlocking ? 2 : 5);
         }
         continue; 
     }
@@ -2209,19 +2897,11 @@ if (a.type === "fireball") {
 
         if (targetCenterDistance < 55 && Math.abs(a.y - (target.y + 80)) < 80) {
             let dmg = (a.type === "rasengan") ? 75 : (a.type === "chidori") ? 70 : 15;
-            target.health -= dmg;
+            const isUltimate = (a.type === "rasengan" || a.type === "chidori");
+            const wasBlocking = target.isBlocking;
+            applyBlockableDamage(target, dmg, target.x + 55, target.y + 80, isUltimate);
 
-            // SPECIAL CONTACT ENGINE: Triggered on Rasengan/Chidori hits impact frames instantly
-            if (a.type === "rasengan" || a.type === "chidori") {
-                target.isHitState = true; 
-                target.vx = 0;
-                target.vy = 0;
-                target.frame = 0;
-                target.frameTimer = 0;
-                // Stagger speed values are dynamically scaled inside Ninja.update loop rules now
-            }
-
-            triggerShake(a.type === "normal" ? 4 : 14);
+            triggerShake(a.type === "normal" ? 4 : (wasBlocking ? 5 : 14));
             attacks.splice(i, 1);
             continue;
         }
@@ -2230,10 +2910,16 @@ if (a.type === "fireball") {
         }
         
         // Update Health and Chakra UI
-        document.getElementById("h1").style.width = Math.max(0, (p1.health/maxHealth)*100) + "%";
-        document.getElementById("h2").style.width = Math.max(0, (p2.health/maxHealth)*100) + "%";
+        const h1Bar = document.getElementById("h1");
+        const h2Bar = document.getElementById("h2");
+        h1Bar.style.width = Math.max(0, (p1.health/maxHealth)*100) + "%";
+        h2Bar.style.width = Math.max(0, (p2.health/maxHealth)*100) + "%";
+        h1Bar.classList.toggle("health-critical", p1.health < 200);
+        h2Bar.classList.toggle("health-critical", p2.health < 200);
         document.getElementById("c1").style.width = p1.chakra + "%";
         document.getElementById("c2").style.width = p2.chakra + "%";
+        updateChakraGlow("c1", p1.chakra);
+        updateChakraGlow("c2", p2.chakra);
         
         if (p1.health <= 0 || p2.health <= 0) nextRound(p1.health > 0 ? "p1" : "p2");
     }
