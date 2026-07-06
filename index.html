@@ -48,8 +48,20 @@
             from { opacity: 0; transform: translate(-50%, -46%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
         }
-        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen, #shippudenMenu, #pauseScreen {
+        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen, #shippudenMenu, #pauseScreen,
+        #onlineMenu, #createRoomScreen, #joinRoomScreen, #coinTossScreen, #onlineCharSelect, #onlineReadyScreen {
             animation: screenFadeIn 0.4s ease;
+        }
+
+        /* --- COIN TOSS SPIN ANIMATION --- */
+        @keyframes coinSpin {
+            0% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(900deg) scale(1.15); }
+            100% { transform: rotateY(1800deg) scale(1); }
+        }
+        .coin-spin {
+            display: inline-block;
+            animation: coinSpin 1.5s cubic-bezier(0.34, 1.2, 0.64, 1) 1;
         }
 
 
@@ -168,7 +180,8 @@ canvas {
 }
 
 /* --- FIXED RESPONSIVE OVERLAY CONTAINERS ENGINE --- */
-        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen { 
+        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen,
+        #onlineMenu, #createRoomScreen, #joinRoomScreen, #coinTossScreen, #onlineCharSelect, #onlineReadyScreen { 
             position: absolute; 
             top: 50%; 
             left: 50%; 
@@ -187,6 +200,12 @@ canvas {
         #difficultySelect { display: none; text-align: center; }
         #endScreen { display: none; text-align: center; }
         #settingsScreen { display: none; }
+        #onlineMenu { display: none; text-align: center; }
+        #createRoomScreen { display: none; }
+        #joinRoomScreen { display: none; }
+        #coinTossScreen { display: none; }
+        #onlineCharSelect { display: none; }
+        #onlineReadyScreen { display: none; }
 
         /* Dynamic Title Adjustment configurations maps */
         #startScreen h1 {
@@ -381,6 +400,49 @@ canvas {
         }
         .chakra.chakra-full {
             animation: chakraFullPulse 1s ease-in-out infinite;
+        }
+
+        /* --- ULTIMATE COOLDOWN BAR: fills up as rasengan/chidori recharges, glows when ready --- */
+        .cooldown-bar {
+            width: 100%;
+            height: 6px;
+            background: #111;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .cooldown-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8e44ad, #c39bd3);
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+        @keyframes cooldownReadyPulse {
+            0%, 100% { box-shadow: 0 0 6px #c39bd3; }
+            50% { box-shadow: 0 0 16px 2px #e6c9ff; }
+        }
+        .cooldown-fill.cd-ready {
+            animation: cooldownReadyPulse 1s ease-in-out infinite;
+        }
+
+        /* --- RAGE MODE BADGE: hidden by default, pulses in when health drops below 20% --- */
+        .rage-badge {
+            display: none;
+            font-family: var(--font-display);
+            font-size: 13px;
+            letter-spacing: 1px;
+            color: #ff5b1f;
+            text-shadow: 0 0 8px #ff3b00;
+            margin-top: 4px;
+        }
+        .rage-badge.active {
+            display: block;
+            animation: ragePulse 0.6s ease-in-out infinite alternate;
+        }
+        @keyframes ragePulse {
+            from { opacity: 0.65; text-shadow: 0 0 8px #ff3b00; }
+            to { opacity: 1; text-shadow: 0 0 18px #ff7a00; }
         }
 
         /* --- SHIPPUDEN MENU STYLING --- */
@@ -812,6 +874,8 @@ button:hover {
   <div id="modeSelect" style="display:none;">
     <button onclick="showCharSelect()" style="background: #e67e22;">⚔️ NARUTO VS SASUKE</button>
     <br>
+    <button onclick="showOnlineMenu()" style="background: #16a085; border: 2px solid white;">🌐 PLAY WITH FRIEND</button>
+    <br>
     <button onclick="showShippudenMenu()" style="background: #d35400; border: 2px solid white;">📜 SHIPPUDEN CHAPTERS</button>
     <br>
     <button class="back-btn" onclick="hideModeSelect()">⬅ BACK</button>
@@ -881,6 +945,56 @@ button:hover {
     <button class="back-btn" onclick="goBack('char')">⬅ Return</button>
 </div>
 
+<!-- ============ ONLINE MULTIPLAYER: room create/join, coin toss, character select ============ -->
+<div id="onlineMenu">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">PLAY WITH FRIEND</h3>
+    <button onclick="createRoom()" style="background:#27ae60;">🏠 CREATE ROOM</button>
+    <button onclick="showJoinRoomScreen()" style="background:#2980b9;">🔑 JOIN ROOM</button>
+    <br>
+    <button class="back-btn" onclick="backFromOnlineMenu()">⬅ Return</button>
+</div>
+
+<div id="createRoomScreen" style="text-align:center;">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">ROOM CREATED</h3>
+    <p style="color:#aaa; font-size:13px;">Share this code with your friend:</p>
+    <div id="roomCodeDisplay" style="font-size: 48px; font-weight:900; letter-spacing: 8px; color: var(--gold); text-shadow: 0 0 20px var(--primary); margin: 15px 0;">----</div>
+    <p id="createRoomStatus" style="color:#f39c12; font-size:14px;">⏳ Waiting for friend to join...</p>
+    <br>
+    <button class="back-btn" onclick="cancelRoom()">✖ Cancel</button>
+</div>
+
+<div id="joinRoomScreen" style="text-align:center;">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">JOIN ROOM</h3>
+    <input type="text" id="joinRoomInput" maxlength="6" placeholder="Enter Room Code" class="auth-input" style="text-align:center; font-size:22px; letter-spacing:4px; max-width:250px; margin: 10px auto;">
+    <p id="joinRoomStatus" style="color:#e74c3c; font-size:13px; min-height:18px;"></p>
+    <button onclick="attemptJoinRoom()" style="background:#2980b9;">JOIN</button>
+    <br>
+    <button class="back-btn" onclick="backFromJoinRoom()">⬅ Return</button>
+</div>
+
+<div id="coinTossScreen" style="text-align:center;">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">COIN TOSS</h3>
+    <div id="coinVisual" class="coin-spin" style="font-size:80px; margin:20px 0;">🪙</div>
+    <p id="coinTossStatus" style="font-size:16px; color:#f39c12;">Flipping...</p>
+</div>
+
+<div id="onlineCharSelect" style="text-align:center;">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">CHOOSE YOUR NINJA</h3>
+    <div id="onlineCharSelectButtons">
+        <button onclick="chooseOnlineChar('naruto')"><img src="rnaruto.png" class="char-portrait" onerror="this.style.display='none'"><span>Naruto Uzumaki</span></button>
+        <button onclick="chooseOnlineChar('sasuke')"><img src="rsasuke.png" class="char-portrait" onerror="this.style.display='none'"><span>Sasuke Uchiha</span></button>
+    </div>
+    <p id="onlineCharWaitStatus" style="color:#f39c12; font-size:14px; display:none;">⏳ Waiting for opponent to choose their ninja...</p>
+</div>
+
+<div id="onlineReadyScreen" style="text-align:center;">
+    <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">ROOM READY!</h3>
+    <p id="onlineReadySummary" style="font-size:15px; color:#eee; margin:15px 0;"></p>
+    <p style="color:#f39c12; font-size:13px;">🚧 Live battle sync is coming in the next update — room setup, coin toss, and character pick are ready now!</p>
+    <br>
+    <button class="back-btn" onclick="leaveOnlineRoom()">⬅ Return to Menu</button>
+</div>
+
 <div id="shippudenMenu" style="display:none;">
     <h1 class="shippuden-heading">SHIPPUDEN ARC</h1>
     <p class="shippuden-subheading">Select Your Mission</p>
@@ -937,12 +1051,16 @@ button:hover {
         <div class="name-tag" id="p1Name">Player</div>
         <div class="bar"><div id="h1" class="health"></div></div>
         <div class="chakra-bar"><div id="c1" class="chakra"></div></div>
+        <div class="cooldown-bar"><div id="cd1" class="cooldown-fill"></div></div>
+        <div class="rage-badge" id="rageBadge1">🔥 RAGE MODE</div>
         <div class="score" id="p1Score">Wins: 0</div>
      </div>
      <div class="bar-container">
         <div class="name-tag" id="p2Name" style="text-align: right;">Bot</div>
         <div class="bar"><div id="h2" class="health"></div></div>
         <div class="chakra-bar"><div id="c2" class="chakra"></div></div>
+        <div class="cooldown-bar"><div id="cd2" class="cooldown-fill"></div></div>
+        <div class="rage-badge" id="rageBadge2" style="text-align: right;">🔥 RAGE MODE</div>
         <div class="score" id="p2Score" style="text-align: right;">Wins: 0</div>
      </div>
  </div>
@@ -1014,8 +1132,8 @@ const characterAssets = {
 };
 
 const assets = {
-    naruto: { stance: 4, run: 6, jump: 3, attack: 7 },
-    sasuke: { stance: 4, run: 6, jump: 3, attack: 4 }
+    naruto: { stance: 4, run: 6, jump: 3, attack: 7, a: 14, b: 14 },
+    sasuke: { stance: 4, run: 6, jump: 3, attack: 4, a: 12, b: 8 }
 };
 
 // 1. Single Image Assets
@@ -1158,9 +1276,9 @@ function showAchievementToast(ach) {
     setTimeout(() => toast.classList.add("show"), 20);
     setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 500); }, 4000);
 }
-let comboCount = 0;
-let comboTimer = 0;
-let comboDelay = 25; // frames gap
+let comboWindowFrames = 50; // COMBO SYSTEM: max gap (frames) allowed between landed hits to keep the chain alive
+let ultCooldownMax = 180; // ULTIMATE COOLDOWN: frames rasengan/chidori stay locked out after use (~3s)
+let meleeRange = 110; // MELEE: how close the attacker must be for the 'w'-key punch to actually land
  
 
 // SETTINGS VARIABLES
@@ -1266,18 +1384,64 @@ class Ninja {
         this.lastGoodImg = null; // <--- ITHU KANDIPPA IRUKKANUM
         this.trail = []; // Motion-blur afterimage history (run/attack states)
         this.isBlocking = false;
+        this.isRaging = false; // RAGE MODE: true when health < 20% max
+        this.combo = 0; // COMBO SYSTEM: consecutive landed-hit counter
+        this.comboTimer = 0; // frames left before combo resets
+        this.ultCooldown = 0; // ULTIMATE COOLDOWN: frames left before rasengan/chidori usable again
+        this.attackKind = null; // 'kunai' or 'melee' — which attack animation this.attacking currently means
+        this.meleeSet = null; // 'a' or 'b' — randomly chosen sprite variant for the current melee swing
+        this.meleeHasHit = false; // guards against landing more than one hit per swing
+
+        // --- BOT AI: dynamic engagement distance (no more fixed spacing) + move-usage balance ---
+        this.engageMode = 'close'; // 'close' (brawl) or 'ranged' (poke) — re-rolled periodically
+        this.engageTimer = 0; // frames left before re-deciding engageMode/targetDist
+        this.targetDist = 150; // the distance the bot is currently trying to hold from the opponent
+        this.moveCounts = { kunai: 0, melee: 0, ultimate: 0, superpower: 0 }; // tracks bot move usage so it doesn't spam one move
+        this.meleeDashing = false; // true while auto-dashing toward the enemy for a Ninja-Storm-style homing punch
+        this.meleeDashTargetX = null; // x position the dash is homing toward
     }
 
     update() {
+// --- MELEE DASH: while committed to a Ninja-Storm-style homing punch, movement is fully driven by the
+// dash (not the normal vx input). Re-aims at the enemy's LIVE position every frame (true homing), so
+// it still lands correctly even if the enemy moves mid-swing — not just a fixed spot decided at the start. ---
+if (this.meleeDashing) {
+    const target = (this === p1) ? p2 : p1;
+    const landingGap = 60;
+    const desiredX = (this.x < target.x) ? target.x - landingGap : target.x + landingGap;
+    const dashSpeed = 22;
+    const diff = desiredX - this.x;
+    if (Math.abs(diff) <= dashSpeed) {
+        this.x = desiredX;
+        this.meleeDashing = false;
+    } else {
+        this.x += Math.sign(diff) * dashSpeed;
+    }
+} else {
 // --- Physics & Gravity: always runs normally, a hit never freezes movement anymore ---
 this.x += this.vx;
+}
 this.y += this.vy;
 this.vy += 0.6; 
 if(this.y >= 440) { this.y = 440; this.vy = 0; this.jumping = false; }
 
+// --- RAGE MODE: activates once health drops below 20% of max, deactivates if healed back up ---
+this.isRaging = this.health > 0 && this.health < maxHealth * 0.2;
+
+// --- COMBO DECAY: consecutive-hit counter resets once the gap between landed hits gets too long ---
+if (this.comboTimer > 0) {
+    this.comboTimer--;
+    if (this.comboTimer <= 0) this.combo = 0;
+}
+
+// --- ULTIMATE COOLDOWN: ticks down every frame regardless of chakra state ---
+if (this.ultCooldown > 0) this.ultCooldown--;
+
 // --- State selection: always the normal pose, a hit never changes this anymore ---
 if (this.attacking) {
-    this.state = 'attack';
+    // MELEE SYSTEM: while a melee swing is playing, show whichever random set (a/b) was picked for this swing.
+    // Otherwise fall back to the existing kunai-throw "attack" pose.
+    this.state = (this.attackKind === 'melee' && this.meleeSet) ? this.meleeSet : 'attack';
 } else if (this.jumping) {
     this.state = 'jump';
 } else if (this.vx !== 0) {
@@ -1290,7 +1454,7 @@ let frames = charSprites[this.name][this.state];
 if (!frames || frames.length === 0) return;
 
 // --- MOTION TRAIL: capture a short afterimage history during run/attack for a "juicier" feel ---
-if (this.state === 'run' || this.state === 'attack') {
+if (this.state === 'run' || this.state === 'attack' || this.state === 'a' || this.state === 'b') {
     this.trail.push({ x: this.x, y: this.y, frame: this.frame, state: this.state });
     if (this.trail.length > 4) this.trail.shift();
 } else if (this.trail.length) {
@@ -1298,12 +1462,21 @@ if (this.state === 'run' || this.state === 'attack') {
 }
 
 this.frameTimer++;
-if (this.frameTimer % this.stagger === 0) {
+// MELEE SPEED FIX: punch frames (a/b sets) advance 2x faster than the default stagger —
+// kunai/run/jump/stance animation speed stays exactly as before.
+const effectiveStagger = (this.state === 'a' || this.state === 'b')
+    ? Math.max(1, Math.round(this.stagger / 2))
+    : this.stagger;
+if (this.frameTimer % effectiveStagger === 0) {
     this.frame = (this.frame + 1) % frames.length;
 
-    if (this.state === 'attack' && this.frame === frames.length - 1) {
+    // Generalized: works for the kunai "attack" pose AND the new melee "a"/"b" poses —
+    // whichever animation is currently playing finishes and hands control back to stance/run/jump.
+    if (this.attacking && this.frame === frames.length - 1) {
         this.attacking = false;
-        this.frame = 0; 
+        this.frame = 0;
+        this.attackKind = null;
+        this.meleeSet = null;
     }
 }
 }
@@ -1327,6 +1500,21 @@ draw(enemyX) {
         }
     }
     
+    // --- RAGE MODE AURA: pulsing orange-red glow behind the character while raging ---
+    if (this.isRaging) {
+        ctx.save();
+        const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 120);
+        const cx = this.x + 55, cy = this.y + 90;
+        const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 90 + 12 * pulse);
+        grad.addColorStop(0, "rgba(255,80,0," + (0.45 + 0.15 * pulse) + ")");
+        grad.addColorStop(1, "rgba(255,80,0,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 90 + 12 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
     // Normal Drawing Logic (Unga palaya code...)
     if (!charSprites[this.name] || !charSprites[this.name][this.state]) return;    if (!charSprites[this.name] || !charSprites[this.name][this.state]) return;
     let frames = charSprites[this.name][this.state];
@@ -1415,7 +1603,21 @@ function flashDamage(targetPlayer) {
 // --- HIT SPARKS: small glowing burst spawned at the impact point on every hit ---
 // --- BLOCK-AWARE DAMAGE: call this instead of "target.health -= dmg" directly.
 // Returns the actual damage applied, and tracks match stats/achievements for p1 blocking. ---
-function applyBlockableDamage(target, rawDamage, hitX, hitY, isSpecial) {
+function applyBlockableDamage(target, rawDamage, hitX, hitY, isSpecial, attacker) {
+    // --- COMBO SYSTEM: every landed hit (blocked or not) extends the attacker's combo chain.
+    // Chain resets automatically via Ninja.update()'s comboTimer countdown if too much time passes between hits. ---
+    if (attacker) {
+        attacker.combo = (attacker.comboTimer > 0) ? attacker.combo + 1 : 1;
+        attacker.comboTimer = comboWindowFrames;
+        if (attacker.combo >= 2) spawnComboPopup(hitX, hitY - 40, attacker.combo);
+    }
+
+    // --- DAMAGE MULTIPLIERS: combo (+6% per stack, capped) and rage mode (+20% flat) stack multiplicatively ---
+    let dmgMultiplier = 1;
+    if (attacker) dmgMultiplier *= 1 + Math.min(attacker.combo - 1, 8) * 0.06;
+    if (attacker && attacker.isRaging) dmgMultiplier *= 1.2;
+    rawDamage = Math.round(rawDamage * dmgMultiplier);
+
     if (target.isBlocking) {
         const reduced = Math.round(rawDamage * 0.2); // blocking absorbs 80% of the hit
         target.health -= reduced;
@@ -1440,6 +1642,31 @@ function applyBlockableDamage(target, rawDamage, hitX, hitY, isSpecial) {
     // Zoom is applied only to the character taking the hit, never the attacker
     if (isSpecial) triggerUltimateZoom(hitX, hitY, 1, target);
     return rawDamage;
+}
+
+// --- COMBO POPUP: floating "COMBO x3!" text that rises and fades at the hit location ---
+let comboPopups = [];
+function spawnComboPopup(x, y, comboNum) {
+    comboPopups.push({ x, y, text: "COMBO x" + comboNum + "!", life: 40, maxLife: 40 });
+}
+function updateAndDrawComboPopups() {
+    for (let i = comboPopups.length - 1; i >= 0; i--) {
+        const c = comboPopups[i];
+        c.life--;
+        c.y -= 0.8;
+        if (c.life <= 0) { comboPopups.splice(i, 1); continue; }
+        const alpha = c.life / c.maxLife;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = "bold 22px 'Bebas Neue', Arial";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#ffdd55";
+        ctx.strokeStyle = "rgba(0,0,0,0.6)";
+        ctx.lineWidth = 3;
+        ctx.strokeText(c.text, c.x, c.y);
+        ctx.fillText(c.text, c.x, c.y);
+        ctx.restore();
+    }
 }
 
 function spawnBlockSpark(x, y) {
@@ -1946,6 +2173,187 @@ function chooseChar(char) {
     document.getElementById("p2Name").innerText = enemyChar + " (BOT)";
 }
 
+// ============================================================================
+// ONLINE MULTIPLAYER: room create/join, coin toss, and synced character select.
+// Uses the existing Firebase Realtime Database (rtdb) — no separate backend needed.
+// NOTE: live fight sync (attacks/health/position between the two real players) is
+// NOT part of this yet — that's planned for a follow-up update. This system covers
+// room creation, joining, a fair coin toss, and character selection sync.
+// ============================================================================
+let currentRoomCode = null;   // the 4-digit code for the room we're currently in
+let myRoomRole = null;        // "host" (room creator) or "guest" (joiner)
+let roomListenerRef = null;   // the active rtdb listener, so we can detach it on leave
+let lastHandledRoomStatus = null; // guards against Firebase re-firing the listener on every field update
+
+function generateRoomCode() {
+    return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit code, e.g. "4829"
+}
+
+function showOnlineMenu() {
+    document.getElementById("modeSelect").style.display = "none";
+    document.getElementById("onlineMenu").style.display = "block";
+}
+
+function backFromOnlineMenu() {
+    document.getElementById("onlineMenu").style.display = "none";
+    document.getElementById("modeSelect").style.display = "block";
+}
+
+function backFromJoinRoom() {
+    document.getElementById("joinRoomScreen").style.display = "none";
+    document.getElementById("joinRoomStatus").innerText = "";
+    document.getElementById("joinRoomInput").value = "";
+    document.getElementById("onlineMenu").style.display = "block";
+}
+
+function createRoom() {
+    if (!currentUser) { alert("Please log in first!"); return; }
+    const code = generateRoomCode();
+    currentRoomCode = code;
+    myRoomRole = "host";
+    rtdb.ref('rooms/' + code).set({
+        hostUid: currentUser.uid,
+        guestUid: null,
+        status: "waiting",
+        tossResult: null,
+        tossWinnerRole: null,
+        winnerChar: null,
+        createdAt: Date.now()
+    }).then(() => {
+        document.getElementById("onlineMenu").style.display = "none";
+        document.getElementById("createRoomScreen").style.display = "block";
+        document.getElementById("roomCodeDisplay").innerText = code;
+        document.getElementById("createRoomStatus").innerText = "⏳ Waiting for friend to join...";
+        listenToRoom(code);
+    }).catch(err => {
+        alert("Could not create room: " + err.message);
+    });
+}
+
+function showJoinRoomScreen() {
+    document.getElementById("onlineMenu").style.display = "none";
+    document.getElementById("joinRoomScreen").style.display = "block";
+}
+
+function attemptJoinRoom() {
+    if (!currentUser) { alert("Please log in first!"); return; }
+    const code = document.getElementById("joinRoomInput").value.trim();
+    const statusEl = document.getElementById("joinRoomStatus");
+    if (!code) { statusEl.style.color = "#e74c3c"; statusEl.innerText = "Enter a room code."; return; }
+
+    statusEl.style.color = "#f39c12";
+    statusEl.innerText = "Checking...";
+
+    rtdb.ref('rooms/' + code).once('value').then(snap => {
+        const room = snap.val();
+        if (!room) { statusEl.style.color = "#e74c3c"; statusEl.innerText = "Room not found."; return; }
+        if (room.status !== "waiting") { statusEl.style.color = "#e74c3c"; statusEl.innerText = "Room is full or already started."; return; }
+
+        currentRoomCode = code;
+        myRoomRole = "guest";
+        rtdb.ref('rooms/' + code).update({ guestUid: currentUser.uid, status: "both_joined" }).then(() => {
+            document.getElementById("joinRoomScreen").style.display = "none";
+            listenToRoom(code);
+        });
+    }).catch(err => {
+        statusEl.style.color = "#e74c3c"; statusEl.innerText = "Error: " + err.message;
+    });
+}
+
+function listenToRoom(code) {
+    if (roomListenerRef) roomListenerRef.off();
+    lastHandledRoomStatus = null;
+    roomListenerRef = rtdb.ref('rooms/' + code);
+
+    roomListenerRef.on('value', (snap) => {
+        const room = snap.val();
+        if (!room) {
+            // Room was deleted (host cancelled, or it never existed)
+            if (currentRoomCode) { alert("Room closed."); leaveOnlineRoom(); }
+            return;
+        }
+
+        // Each transition below only runs ONCE per status change, even though Firebase re-fires
+        // this callback on every single field update inside the room object.
+        if (room.status === "both_joined" && lastHandledRoomStatus !== "both_joined") {
+            lastHandledRoomStatus = "both_joined";
+            document.getElementById("createRoomStatus").innerText = "✅ Friend joined! Tossing the coin...";
+            document.getElementById("createRoomScreen").style.display = "none";
+            document.getElementById("joinRoomScreen").style.display = "none";
+            document.getElementById("coinTossScreen").style.display = "block";
+            document.getElementById("coinTossStatus").innerText = "Flipping...";
+            document.getElementById("coinTossStatus").style.color = "#f39c12";
+            document.getElementById("coinVisual").innerText = "🪙";
+
+            // Only the HOST performs the authoritative coin flip, so both clients agree on one result
+            if (myRoomRole === "host") {
+                setTimeout(() => {
+                    const result = Math.random() < 0.5 ? "heads" : "tails";
+                    const winnerRole = Math.random() < 0.5 ? "host" : "guest";
+                    rtdb.ref('rooms/' + code).update({ tossResult: result, tossWinnerRole: winnerRole, status: "toss_revealed" });
+                }, 1500); // gives the coin-spin animation time to play before the result lands
+            }
+        }
+
+        if (room.status === "toss_revealed" && lastHandledRoomStatus !== "toss_revealed") {
+            lastHandledRoomStatus = "toss_revealed";
+            const coinVisual = document.getElementById("coinVisual");
+            const statusEl = document.getElementById("coinTossStatus");
+            coinVisual.innerText = (room.tossResult === "heads") ? "🙂" : "🌀"; // simple heads/tails face swap
+            const iAmWinner = (room.tossWinnerRole === myRoomRole);
+            statusEl.innerText = room.tossResult.toUpperCase() + " — " + (iAmWinner ? "YOU WON! Pick your character next." : "Opponent won the toss.");
+            statusEl.style.color = iAmWinner ? "#2ecc71" : "#e74c3c";
+
+            setTimeout(() => {
+                document.getElementById("coinTossScreen").style.display = "none";
+                document.getElementById("onlineCharSelect").style.display = "block";
+                document.getElementById("onlineCharSelectButtons").style.display = iAmWinner ? "block" : "none";
+                document.getElementById("onlineCharWaitStatus").style.display = iAmWinner ? "none" : "block";
+            }, 2200);
+        }
+
+        if (room.status === "char_selected" && lastHandledRoomStatus !== "char_selected") {
+            lastHandledRoomStatus = "char_selected";
+            document.getElementById("onlineCharSelect").style.display = "none";
+            document.getElementById("onlineReadyScreen").style.display = "block";
+
+            const winnerIsMe = (room.tossWinnerRole === myRoomRole);
+            const myPickedChar = winnerIsMe ? room.winnerChar : (room.winnerChar === "naruto" ? "sasuke" : "naruto");
+            const opponentChar = (myPickedChar === "naruto") ? "sasuke" : "naruto";
+            // Reuse the existing myChar/enemyChar globals so a future fight-sync update can hook straight in
+            myChar = myPickedChar;
+            enemyChar = opponentChar;
+
+            document.getElementById("onlineReadySummary").innerText =
+                "You are playing as " + myPickedChar.toUpperCase() + ". Opponent is " + opponentChar.toUpperCase() + ".";
+        }
+    });
+}
+
+function chooseOnlineChar(char) {
+    if (!currentRoomCode) return;
+    rtdb.ref('rooms/' + currentRoomCode).update({ winnerChar: char, status: "char_selected" });
+}
+
+function cancelRoom() {
+    if (currentRoomCode && myRoomRole === "host") {
+        rtdb.ref('rooms/' + currentRoomCode).remove();
+    }
+    leaveOnlineRoom();
+}
+
+function leaveOnlineRoom() {
+    if (roomListenerRef) { roomListenerRef.off(); roomListenerRef = null; }
+    currentRoomCode = null;
+    myRoomRole = null;
+    lastHandledRoomStatus = null;
+    ["createRoomScreen", "joinRoomScreen", "coinTossScreen", "onlineCharSelect", "onlineReadyScreen", "onlineMenu"].forEach(id => {
+        document.getElementById(id).style.display = "none";
+    });
+    document.getElementById("startScreen").style.display = "flex";
+    hideModeSelect();
+}
+
 function setDifficulty(level) {
     difficulty = level;
     document.getElementById("difficultySelect").style.display = "none";
@@ -1966,6 +2374,8 @@ function reset() {
     cinematicStep = 0;
     cinematicTimer = 0;
     shakeAmount = 0;
+    comboPopups = []; // Clear any leftover combo text between rounds
+    hitSparks = [];
     document.getElementById("p1Score").innerText = "Wins: " + p1Wins;
     document.getElementById("p2Score").innerText = "Wins: " + p2Wins;
 }
@@ -2124,7 +2534,8 @@ document.addEventListener("keydown", e => {
     }
     if(e.key===keyBindings.jump) jump();
     if(e.key===keyBindings.block) startBlock();
-    if(e.key==="w") isFiring = true;
+    if(e.key==="k") isFiring = true; // kunai throw (moved here from 'w')
+    if(e.key==="w") meleeAttack("p1"); // melee punch: random sprite-set (a/b) swing
     if(e.key===keyBindings.rasengan) rasengan(); 
     if(e.key===keyBindings.chidori) chidori();
     if(e.key===keyBindings.clone) shadowClone("p1"); 
@@ -2150,7 +2561,7 @@ if(e.key === keyBindings.tails) {
 document.addEventListener("keyup", e => {
     if(e.key=="a") keys.left = false;
     if(e.key=="d") keys.right = false;
-    if(e.key=="w") isFiring = false;
+    if(e.key=="k") isFiring = false;
     if(e.key===keyBindings.block) stopBlock();
 });
 
@@ -2261,17 +2672,9 @@ function createAttack(owner, type = "normal") {
     let target = (owner === "p1") ? p2 : p1;
     let dir = (target.x > attacker.x) ? 1 : -1;
 
-    // COMBO LOGIC
-    comboCount++;
-    comboTimer = comboDelay;
-
-    if (comboCount > 3) comboCount = 1;
-
-    let damage = 10;
-    if (comboCount === 2) damage = 15;
-    if (comboCount === 3) damage = 25; // final hit powerful
-
-
+    // NOTE: combo bonus damage and rage bonus damage are now applied centrally in
+    // applyBlockableDamage() at the moment a hit actually LANDS, based on the attacker's
+    // live combo/rage state — not here at throw-time. Base damage stays flat per attack type.
     attacks.push({ 
         x: attacker.x + 50, 
         y: attacker.y + 60, 
@@ -2279,16 +2682,62 @@ function createAttack(owner, type = "normal") {
         owner: owner, 
         type: type, 
         angle: 0,
-        damage: damage,
-        combo: comboCount
-        
+        damage: 15
+    });
+}
+
+// --- MELEE PUNCH ATTACK ('w' key): random sprite-set (a/b) punch, close-range, no projectile ---
+function meleeAttack(owner) {
+    let attacker = (owner === "p1") ? p1 : p2;
+    let target = (owner === "p1") ? p2 : p1;
+    if (attacker.attacking || !gameRunning || attacker.isTailsMode) return; // one swing at a time
+
+    // RANDOM SET: pick 'a' or 'b' completely randomly every swing — no fixed order
+    attacker.meleeSet = Math.random() < 0.5 ? 'a' : 'b';
+    attacker.attackKind = 'melee';
+    attacker.attacking = true;
+    attacker.frame = 0;
+    attacker.meleeHasHit = false;
+
+    // NINJA-STORM-STYLE HOMING DASH: if the enemy isn't already in melee range, automatically dash
+    // straight toward them the instant the attack starts — the strike always closes the gap on its own,
+    // just like the auto-target lunge attacks in the Ultimate Ninja Storm games.
+    const dist = Math.abs(attacker.x - target.x);
+    if (dist > meleeRange) {
+        const landingGap = 60; // land just inside striking distance, not on top of the opponent
+        attacker.meleeDashTargetX = (attacker.x < target.x) ? target.x - landingGap : target.x + landingGap;
+        attacker.meleeDashing = true;
+    } else {
+        attacker.meleeDashing = false;
+    }
+}
+
+// --- MELEE HIT DETECTION: checked every frame in loop() — lands damage once per swing at the mid-animation "impact" frame ---
+function checkMeleeHits() {
+    [p1, p2].forEach(attacker => {
+        if (!attacker.attacking || attacker.attackKind !== 'melee' || attacker.meleeHasHit) return;
+        const setFrames = charSprites[attacker.name] && charSprites[attacker.name][attacker.meleeSet];
+        if (!setFrames || !setFrames.length) return;
+
+        const impactFrame = Math.floor(setFrames.length / 2); // punch "lands" halfway through the swing animation
+        if (attacker.frame >= impactFrame) {
+            const target = (attacker === p1) ? p2 : p1;
+            const dist = Math.abs((attacker.x + 55) - (target.x + 55));
+            if (dist < 100) { // slightly generous — the homing dash usually lands ~60px away, this is just a safety margin
+                applyBlockableDamage(target, 15, target.x + 55, target.y + 60, false, attacker);
+                if (attacker === p1) triggerShake(4);
+            }
+            attacker.meleeHasHit = true; // only one damage chance per swing, hit or miss
+        }
     });
 }
 
 function rasengan() {
     // --- DAMAGE LOCK: Character hit state-la amukuna drop loop trigger aagadhu ---
-    if(p1.chakra < 40 || myChar !== "naruto" || !gameRunning) return;
+    // --- COOLDOWN LOCK: even with enough chakra, ultimate stays locked until the cooldown bar refills ---
+    if(p1.chakra < 40 || myChar !== "naruto" || !gameRunning || p1.ultCooldown > 0) return;
     p1.chakra -= 40;
+    p1.ultCooldown = ultCooldownMax;
     p1.attacking = true; 
     p1.frame = 0;         
     sounds.rasengan.play();
@@ -2297,8 +2746,10 @@ function rasengan() {
 
 function chidori() {
     // --- DAMAGE LOCK ---
-    if(p1.chakra < 40 || myChar !== "sasuke" || !gameRunning) return;
+    // --- COOLDOWN LOCK: even with enough chakra, ultimate stays locked until the cooldown bar refills ---
+    if(p1.chakra < 40 || myChar !== "sasuke" || !gameRunning || p1.ultCooldown > 0) return;
     p1.chakra -= 40;
+    p1.ultCooldown = ultCooldownMax;
     p1.attacking = true;
     p1.frame = 0;
     sounds.chidori.play();
@@ -2330,6 +2781,9 @@ function bot() {
         blockChance = 0.55; punishBonus = 0.14; spacing = 460; retreatHealthPct = 0.35;
     }
 
+    // RAGE MODE: bot also gets a speed boost while raging, matching the player's comeback boost
+    if (p2.isRaging) speed *= 1.25;
+
     // Auto-release the bot's guard after a short window so it's not a permanent shield
     if (p2.isBlocking) {
         p2.blockTimer = (p2.blockTimer || 0) - 1;
@@ -2338,16 +2792,29 @@ function bot() {
 
     let currentDist = Math.abs(p2.x - p1.x);
 
-    // --- SPACING: keep an ideal fight distance; higher tiers also create space when losing instead of trading blindly ---
+    // --- MOVEMENT: approach to a close, comfortable fighting distance and STAY there — no more
+    // randomly backing off mid-fight. The only time the bot ever steps backward now is the brief
+    // recoil after firing a special/ultimate move (see below). Melee/kunai attacks always hold position. ---
+    p2.engageTimer--;
+    if (p2.engageTimer <= 0) {
+        p2.targetDist = 70 + Math.random() * 60; // 70-130px: a close, human brawling distance
+        p2.engageTimer = 90 + Math.floor(Math.random() * 120); // re-roll every ~1.5-3.5s for slight natural variance
+    }
+
     p2.vx = 0;
-    if (!p2.isBlocking) {
-        if (p2.x < p1.x - spacing) { 
-            p2.vx = speed; 
-        } else if (p2.x > p1.x + spacing) { 
-            p2.vx = -speed; 
-        } else if (retreatHealthPct > 0 && p2.health < 800 * retreatHealthPct && currentDist < spacing) {
-            p2.vx = (p2.x < p1.x) ? -speed : speed;
+    if (!p2.isBlocking && !p2.meleeDashing) { // dash (set by meleeAttack) fully owns movement while active
+        const towardSign = (p1.x > p2.x) ? 1 : -1;
+        if (p2.attacking && p2.attackKind === 'special') {
+            // SPECIAL ATTACK RECOIL: only a special/ultimate move gets to create distance —
+            // ordinary melee/kunai attacks never back off mid-swing anymore, that looked broken.
+            p2.vx = -towardSign * speed * 0.8;
+        } else if (p2.attacking) {
+            // Mid-swing on melee or kunai — freeze in place and let the attack play out
+            p2.vx = 0;
+        } else if (currentDist > p2.targetDist) {
+            p2.vx = towardSign * speed; // approach until at a comfortable fighting distance
         }
+        // else: already close enough and not attacking — just stand and look for an opening
     }
 
     // --- DEFENSIVE REACTION: dodge or block incoming attacks depending on skill tier ---
@@ -2371,31 +2838,56 @@ function bot() {
     // --- OFFENSE: punish the player's attack recovery window with a bonus to attack chance (bigger bonus on higher tiers) ---
     let effectiveAttackChance = attackChance + (p1.attacking ? punishBonus : 0);
     if (currentDist < 550 && Math.random() < effectiveAttackChance && !p2.attacking && !p2.isBlocking) {
-        p2.attacking = true;
-        p2.frame = 0; 
-        createAttack("p2", "normal");
-    }
+        // --- UNIFIED ATTACK RATIO: exactly one decision per attack-roll, split 7:1:2 —
+        // 70% melee ('w' frames, the dominant normal attack — now auto-dashes into range via meleeAttack()),
+        // 10% kunai (rare ranged poke), 20% special (rasengan/chidori ultimate OR shadow-clone/sharingan). ---
+        const roll = Math.random();
 
-    // --- Special Skills: higher tiers hold chakra for a real window instead of throwing it away at long range ---
-    if (p2.chakra >= 40 && !p2.attacking && !p2.isBlocking) {
-        let wantsSpecial = Math.random() < specialChance;
-        if (difficulty === "hard") wantsSpecial = wantsSpecial && currentDist < 500;
-        if (wantsSpecial) {
-            p2.chakra -= 40;
+        if (roll < 0.7) {
+            // MELEE bucket (7/10) — meleeAttack() itself now auto-dashes toward the player if not already close
+            meleeAttack("p2");
+            p2.moveCounts.melee++;
+        } else if (roll < 0.8) {
+            // KUNAI bucket (1/10) — ranged, thrown from any distance inside the attack-decision range above
             p2.attacking = true;
             p2.frame = 0;
-            let type = (enemyChar === "naruto") ? "rasengan" : "chidori";
-            createAttack("p2", type);
-            if(sounds[type]) { sounds[type].currentTime = 0; sounds[type].play(); }
-        }
-    }
+            createAttack("p2", "normal");
+            p2.moveCounts.kunai++;
+        } else {
+            // SPECIAL bucket (2/10) — pick randomly among whichever special moves the bot can actually
+            // afford right now, so every move (including fireball) gets a real, equal shot instead of
+            // fireball only ever firing as a rare bonus tacked onto sharingan.
+            const ultimateReady = p2.chakra >= 40 && p2.ultCooldown <= 0 && (difficulty !== "hard" || currentDist < 500);
+            const options = [];
+            if (ultimateReady) options.push('ultimate');
+            if (enemyChar === "naruto" && p2.chakra >= 60) options.push('clone');
+            if (enemyChar === "sasuke" && p2.chakra >= 80) options.push('sharingan');
+            if (enemyChar === "sasuke" && p2.chakra >= 50) options.push('fireball');
 
-    // Super Powers
-    if (Math.random() < superPowerChance) { 
-        if (enemyChar === "naruto") { shadowClone("p2"); } 
-        else { 
-            activateSharingan("p2"); 
-            if (enemyChar === "sasuke" && Math.random() < 0.02) useFireball("p2");
+            if (options.length) {
+                const choice = options[Math.floor(Math.random() * options.length)];
+                if (choice === 'ultimate') {
+                    p2.chakra -= 40;
+                    p2.ultCooldown = ultCooldownMax;
+                    p2.attacking = true;
+                    p2.frame = 0;
+                    p2.attackKind = 'special'; // marks this as a special move so the recoil-retreat logic applies
+                    let type = (enemyChar === "naruto") ? "rasengan" : "chidori";
+                    createAttack("p2", type);
+                    p2.moveCounts.ultimate++;
+                    if (sounds[type]) { sounds[type].currentTime = 0; sounds[type].play(); }
+                } else if (choice === 'clone') {
+                    shadowClone("p2");
+                    p2.moveCounts.superpower++;
+                } else if (choice === 'sharingan') {
+                    activateSharingan("p2");
+                    p2.moveCounts.superpower++;
+                } else if (choice === 'fireball') {
+                    useFireball("p2");
+                    p2.moveCounts.superpower++;
+                }
+            }
+            // else: wanted a special but had no chakra for any of them — skip this roll, try again next time
         }
     }
 }
@@ -2467,12 +2959,7 @@ function nextRound(winner) {
 
 function loop(time) {
     if (!gameRunning || isPaused) return; // ✅ Add || isPaused here
-    // ... rest of the code
-    if (comboTimer > 0) {
-    comboTimer--;
-} else {
-    comboCount = 0;
-}
+    // Combo/rage/cooldown timers now live per-Ninja and tick inside Ninja.update() each frame.
 
     const elapsed = time - lastFrameTime;
     const fpsInterval = 1000 / gameFPS;
@@ -2578,9 +3065,9 @@ if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
          else {
             // Player Movement Update
             p1.vx = 0;
-
-            if (keys.left) p1.vx = -8;
-            if (keys.right) p1.vx = 8;
+            const p1RageSpeed = p1.isRaging ? 1.25 : 1; // RAGE MODE: faster movement while raging
+            if (keys.left) p1.vx = -8 * p1RageSpeed;
+            if (keys.right) p1.vx = 8 * p1RageSpeed;
 
             // Bot Logic
             bot();
@@ -2621,7 +3108,9 @@ if (showCharacters) {
     // Tails Mode-la irukkum podhu Naruto-va draw panna maattom (Vanish effect)
     if (!isP1Fireball && !p1.isTailsMode) p1.draw(p2.x); 
     if (!isP2Fireball) p2.draw(p1.x);
+    checkMeleeHits();
     updateAndDrawHitSparks();
+    updateAndDrawComboPopups();
 }        }
 
     if (p1.isTailsMode) {
@@ -2689,7 +3178,8 @@ if (showCharacters) {
         drawTails(currentImg, moveX, yPos, attackSize, attackSize);
         
         if (Math.abs(moveX - (target.x + 40)) < 55) {
-            applyBlockableDamage(target, 70, target.x + 55, target.y + 60, true);
+            // COMBO SYSTEM: special jutsu (four-tails ultimate) doesn't build or benefit from combo — combo is melee-only
+            applyBlockableDamage(target, 70, target.x + 55, target.y + 60, true, null);
 
             triggerShake(15);
             p1.tailsFrame = 14; 
@@ -2857,9 +3347,11 @@ if (a.type === "fireball") {
 
     // 3. DAMAGE WITH HIT BOUNDARY DETECTION LOCKS
         let target = (a.owner === "p1") ? p2 : p1;
+        let fireballAttacker = (a.owner === "p1") ? p1 : p2;
         if (a.frame >= 7 && Math.abs(a.x - (target.x + 55)) < 75) {
             const wasBlocking = target.isBlocking;
-            applyBlockableDamage(target, a.damage || 10, target.x + 55, target.y + 60, true);
+            // COMBO SYSTEM: fireball is special jutsu — doesn't build or benefit from combo — combo is melee-only
+            applyBlockableDamage(target, a.damage || 10, target.x + 55, target.y + 60, true, null);
             
             triggerShake(wasBlocking ? 2 : 5);
         }
@@ -2891,6 +3383,7 @@ if (a.type === "fireball") {
 
            // Damage and Cleanup with Precise Position Freeze Interception
         let target = (a.owner === "p1") ? p2 : p1;
+        let projectileAttacker = (a.owner === "p1") ? p1 : p2;
 
         // Enemy boundary check distance metrics
         let targetCenterDistance = Math.abs(a.x - (target.x + 55));
@@ -2899,7 +3392,11 @@ if (a.type === "fireball") {
             let dmg = (a.type === "rasengan") ? 75 : (a.type === "chidori") ? 70 : 15;
             const isUltimate = (a.type === "rasengan" || a.type === "chidori");
             const wasBlocking = target.isBlocking;
-            applyBlockableDamage(target, dmg, target.x + 55, target.y + 80, isUltimate);
+            // COMBO SYSTEM: kunai no longer builds or benefits from combo — that's now exclusive to the
+            // 'w'-key melee attack (see checkMeleeHits). Pass null here so kunai hits skip combo entirely.
+            // COMBO SYSTEM: kunai AND rasengan/chidori are all special/ranged jutsu now — none of them build
+            // or benefit from combo. Combo is exclusively for the 'w'-key melee attack (see checkMeleeHits).
+            applyBlockableDamage(target, dmg, target.x + 55, target.y + 80, isUltimate, null);
 
             triggerShake(a.type === "normal" ? 4 : (wasBlocking ? 5 : 14));
             attacks.splice(i, 1);
@@ -2920,6 +3417,20 @@ if (a.type === "fireball") {
         document.getElementById("c2").style.width = p2.chakra + "%";
         updateChakraGlow("c1", p1.chakra);
         updateChakraGlow("c2", p2.chakra);
+
+        // --- ULTIMATE COOLDOWN BAR: fills from 0% to 100% as ultCooldown counts down to 0 ---
+        const cd1Bar = document.getElementById("cd1");
+        const cd2Bar = document.getElementById("cd2");
+        const cd1Pct = 100 - Math.min(100, (p1.ultCooldown / ultCooldownMax) * 100);
+        const cd2Pct = 100 - Math.min(100, (p2.ultCooldown / ultCooldownMax) * 100);
+        cd1Bar.style.width = cd1Pct + "%";
+        cd2Bar.style.width = cd2Pct + "%";
+        cd1Bar.classList.toggle("cd-ready", p1.ultCooldown <= 0);
+        cd2Bar.classList.toggle("cd-ready", p2.ultCooldown <= 0);
+
+        // --- RAGE MODE BADGE: show "🔥 RAGE MODE" label while health is below the rage threshold ---
+        document.getElementById("rageBadge1").classList.toggle("active", p1.isRaging);
+        document.getElementById("rageBadge2").classList.toggle("active", p2.isRaging);
         
         if (p1.health <= 0 || p2.health <= 0) nextRound(p1.health > 0 ? "p1" : "p2");
     }
