@@ -88,6 +88,7 @@
     left: 0;
     width: 100%; 
     height: 100%; 
+    height: 100dvh; /* FIX: dynamic viewport height so bottom-anchored buttons never end up hidden below the visible mobile browser area */
     display: none; 
     z-index: 999 !important; /* Touch items display directly on top of canvas graphics */
     pointer-events: none;
@@ -189,6 +190,8 @@ canvas {
             width: 100%;
             max-width: 500px; /* Boundaries content anchor lock */
             max-height: 90vh; 
+            max-height: 90dvh; /* dynamic viewport height — accounts for mobile browser address-bar chrome */
+            overflow-y: auto; /* FIX: tall content (e.g. both character cards) now scrolls instead of being clipped below the fold */
             box-sizing: border-box;
             padding: 15px;
             z-index: 10; 
@@ -1042,6 +1045,17 @@ button:hover {
         <button onclick="togglePause(false)" style="background: #2ecc71; width: 80%;">▶️ RESUME BATTLE</button>
         <br>
         <button onclick="exitGame(); togglePause(false);" class="back-btn" style="background: var(--danger); width: 80%;">🏳️ ABANDON MISSION</button>
+    </div>
+</div>
+
+<!-- --- OPPONENT DISCONNECTED OVERLAY --- -->
+<div id="opponentDisconnectedOverlay" style="display:none; position: fixed; inset:0; z-index: 250; background: rgba(0,0,0,0.85); align-items: center; justify-content: center;">
+    <div class="settings-panel" style="text-align: center;">
+        <h1 style="font-size: 30px; text-shadow: 0 0 15px var(--danger); color: #e74c3c; margin-top: 0;">🔌 OPPONENT DISCONNECTED</h1>
+        <p style="color: #ccc; font-size: 14px; margin-bottom: 25px;">Your friend has left the match. What would you like to do?</p>
+        <button onclick="continueWithBot()" style="background: #2980b9; width: 80%;">🤖 CONTINUE WITH BOT</button>
+        <br>
+        <button onclick="confirmWinByDisconnect()" style="background: #f39c12; width: 80%;">🏆 CONFIRM WIN</button>
     </div>
 </div>
 
@@ -2192,7 +2206,9 @@ let isOnlineMatch = false;
 let onlineOpponentRole = null;    // the OTHER player's role, so we know which DB path to listen to
 let liveStateListenerRef = null;
 let attackEventListenerRef = null;
-let lastProcessedAttackTs = 0;    // ignores stale/duplicate attack events on re-subscribe
+let opponentPresenceRef = null;   // so we can detach the disconnect-watcher listener on cleanup
+let lastProcessedAttackSeq = -1; // ignores stale/duplicate attack events — sequence-based, immune to clock skew between devices
+let myAttackSeq = 0;              // increments on every attack I throw, so the opponent can dedupe reliably
 let broadcastFrameCounter = 0;    // throttles how often we push our own state to Firebase
 
 function generateRoomCode() {
@@ -2357,10 +2373,61 @@ function requestStartOnlineMatch() {
 function startOnlineMatch() {
     isOnlineMatch = true;
     onlineOpponentRole = (myRoomRole === "host") ? "guest" : "host";
-    lastProcessedAttackTs = Date.now(); // ignore any leftover attack events from before the match began
+    lastProcessedAttackSeq = -1; // fresh match — accept every attack event from here on
     document.getElementById("onlineReadyScreen").style.display = "none";
     listenToLiveMatch();
+    setupPresence();
     setDifficulty("medium"); // reuses the existing reset()+startGame() flow — difficulty itself is unused since bot() never runs in online mode
+}
+
+// --- PRESENCE / DISCONNECT DETECTION ---
+// Firebase's onDisconnect() fires server-side the moment the connection actually drops
+// (tab closed, phone locked, wifi lost) — it works even if no more JS runs on that client.
+function setupPresence() {
+    if (!currentRoomCode || !myRoomRole) return;
+    const myPresenceRef = rtdb.ref('rooms/' + currentRoomCode + '/presence/' + myRoomRole);
+    myPresenceRef.set('online');
+    myPresenceRef.onDisconnect().set('offline');
+
+    opponentPresenceRef = rtdb.ref('rooms/' + currentRoomCode + '/presence/' + onlineOpponentRole);
+    opponentPresenceRef.on('value', (snap) => {
+        const status = snap.val();
+        if (status === 'offline' && isOnlineMatch && gameRunning) {
+            showOpponentDisconnectedPrompt();
+        }
+    });
+}
+
+function showOpponentDisconnectedPrompt() {
+    if (document.getElementById("opponentDisconnectedOverlay").style.display === "flex") return; // already showing
+    isPaused = true;
+    cancelAnimationFrame(loopId);
+    document.getElementById("opponentDisconnectedOverlay").style.display = "flex";
+}
+
+function continueWithBot() {
+    document.getElementById("opponentDisconnectedOverlay").style.display = "none";
+    // Hand p2 over to the local bot AI from wherever it currently stands — health/position stay as-is
+    isOnlineMatch = false;
+    if (liveStateListenerRef) { liveStateListenerRef.off(); liveStateListenerRef = null; }
+    if (attackEventListenerRef) { attackEventListenerRef.off(); attackEventListenerRef = null; }
+    if (opponentPresenceRef) { opponentPresenceRef.off(); opponentPresenceRef = null; }
+    p2.engageTimer = 0; // forces the bot's engagement-mode logic to re-roll immediately instead of using stale synced state
+    p2.wantsToMelee = false;
+    isPaused = false;
+    lastFrameTime = performance.now();
+    cancelAnimationFrame(loopId);
+    loopId = requestAnimationFrame(loop);
+}
+
+function confirmWinByDisconnect() {
+    document.getElementById("opponentDisconnectedOverlay").style.display = "none";
+    isOnlineMatch = false;
+    if (liveStateListenerRef) { liveStateListenerRef.off(); liveStateListenerRef = null; }
+    if (attackEventListenerRef) { attackEventListenerRef.off(); attackEventListenerRef = null; }
+    if (opponentPresenceRef) { opponentPresenceRef.off(); opponentPresenceRef = null; }
+    isPaused = false;
+    nextRound("p1"); // opponent left, so the remaining player takes the round/match
 }
 
 function listenToLiveMatch() {
@@ -2376,8 +2443,12 @@ function listenToLiveMatch() {
         p2.health = s.health; p2.chakra = s.chakra;
         p2.isBlocking = s.isBlocking; p2.isRaging = s.isRaging;
         p2.combo = s.combo || 0;
-        p2.state = s.state; p2.frame = s.frame || 0;
-        p2.attacking = s.attacking; p2.attackKind = s.attackKind; p2.meleeSet = s.meleeSet;
+        // NOTE: attacking/attackKind/frame are deliberately NOT touched here — they're driven exclusively
+        // by the attackEvents channel + p2's own local animation ticking (see loop()). Overwriting them from
+        // this continuous, independently-timed channel caused a race that could silently cancel a swing
+        // mid-animation whenever a stale packet arrived a beat late.
+        p2._remoteMoving = !!s.isMoving;
+        p2._remoteJumping = !!s.isJumping;
     });
 
     // Discrete channel: one-off attack triggers (kunai/melee/ultimate), injected straight into the
@@ -2386,8 +2457,11 @@ function listenToLiveMatch() {
     attackEventListenerRef.on('value', (snap) => {
         const ev = snap.val();
         if (!ev || !isOnlineMatch) return;
-        if (ev.ts <= lastProcessedAttackTs) return; // already handled, or stale from before this match
-        lastProcessedAttackTs = ev.ts;
+        // SEQUENCE-BASED DEDUPE: a wall-clock timestamp comparison here silently dropped every single
+        // attack whenever the two devices' clocks weren't perfectly in sync (very common) — a monotonic
+        // per-sender counter has no such dependency, so nothing gets missed.
+        if (typeof ev.seq !== "number" || ev.seq <= lastProcessedAttackSeq) return;
+        lastProcessedAttackSeq = ev.seq;
 
         if (ev.type === 'melee') {
             // Reuses checkMeleeHits() as-is — it already loops over both p1 and p2 looking for a live swing
@@ -2419,15 +2493,15 @@ function broadcastMyState() {
         health: p1.health, chakra: p1.chakra,
         isBlocking: p1.isBlocking, isRaging: p1.isRaging,
         combo: p1.combo,
-        state: p1.state, frame: p1.frame,
-        attacking: p1.attacking, attackKind: p1.attackKind, meleeSet: p1.meleeSet
+        isMoving: p1.vx !== 0, isJumping: p1.jumping
     });
 }
 
 function broadcastAttackEvent(type, meleeSet) {
     if (!isOnlineMatch || !currentRoomCode || !myRoomRole) return;
+    myAttackSeq++;
     rtdb.ref('rooms/' + currentRoomCode + '/attackEvents/' + myRoomRole).set({
-        type: type, meleeSet: meleeSet || null, ts: Date.now()
+        type: type, meleeSet: meleeSet || null, seq: myAttackSeq
     });
 }
 
@@ -3186,7 +3260,24 @@ if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
 
             // Update All Ninjas
             [p1, p2].forEach(p => {
-                if (isOnlineMatch && p === p2) return; // p2 is a network puppet — position/animation come entirely from sync, no local physics
+                if (isOnlineMatch && p === p2) {
+                    // p2 is a network puppet in online mode: position/health/chakra come entirely from
+                    // the liveState sync (already applied by the listener above). We still call update()
+                    // so its OWN attack-animation timer ticks and resets 'attacking' locally and correctly —
+                    // decoupled from the network, which is what avoids the swing-cancelling race condition.
+                    // vx/vy are pinned to 0 so this call never actually moves the synced position.
+                    p.vx = 0;
+                    p.vy = 0;
+                    const syncedX = p.x, syncedY = p.y;
+                    p.update();
+                    p.x = syncedX; p.y = syncedY; // re-assert the authoritative synced position
+                    if (!p.attacking) {
+                        // Cosmetic only: show a run/jump pose between position syncs using the opponent's
+                        // broadcasted movement flags, without this ever affecting actual position or hit detection.
+                        p.state = p._remoteJumping ? 'jump' : (p._remoteMoving ? 'run' : 'stance');
+                    }
+                    return;
+                }
                 p.update(); // Update physics and animation state
                 p.x = Math.max(0, Math.min(canvas.width - 110, p.x));
                 if (p.chakra < 100) p.chakra += 0.12;
@@ -3562,6 +3653,7 @@ function exitGame() {
     if (isOnlineMatch) {
         if (liveStateListenerRef) { liveStateListenerRef.off(); liveStateListenerRef = null; }
         if (attackEventListenerRef) { attackEventListenerRef.off(); attackEventListenerRef = null; }
+        if (opponentPresenceRef) { opponentPresenceRef.off(); opponentPresenceRef = null; }
         if (roomListenerRef) { roomListenerRef.off(); roomListenerRef = null; }
         if (currentRoomCode && myRoomRole === "host") rtdb.ref('rooms/' + currentRoomCode).remove();
         isOnlineMatch = false;
