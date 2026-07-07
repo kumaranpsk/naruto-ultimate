@@ -313,7 +313,25 @@ canvas {
         }
 
         .back-btn { background: rgba(127, 140, 141, 0.7); }
-        .quit-btn { background: var(--danger); padding: 8px 18px; font-size: 13px; margin-top: 10px; border-radius: 8px; }
+        /* Pause icon: no button chrome, just the symbol pinned to the top-left corner */
+        .quit-btn {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            width: auto;
+            height: auto;
+            background: none;
+            border: none;
+            box-shadow: none;
+            padding: 4px;
+            margin: 0;
+            font-size: clamp(22px, 6vw, 30px);
+            line-height: 1;
+            color: #fff;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.85));
+        }
+        .quit-btn:hover { background: none; box-shadow: none; transform: scale(1.12); }
+        .quit-btn:active { transform: scale(0.9); }
 
 
         #ui { 
@@ -335,17 +353,17 @@ canvas {
         }
 
         .bar-container { 
-            width: 320px; 
+            width: clamp(150px, 40vw, 320px); 
             margin-bottom: 5px; 
             background: var(--dark-glass); 
-            padding: 10px; 
+            padding: clamp(6px, 1.8vw, 10px); 
             border-radius: 15px; 
             border: 1px solid var(--glass); 
         }
 
         .bar { 
             width: 100%; 
-            height: 20px; 
+            height: clamp(12px, 3.2vw, 20px); 
             background: #222; 
             border-radius: 11px; 
             overflow: hidden; 
@@ -361,7 +379,7 @@ canvas {
 
         .chakra-bar { 
             width: 100%; 
-            height: 10px; 
+            height: clamp(6px, 1.8vw, 10px); 
             background: #111; 
             border-radius: 5px; 
             margin-top: 5px; 
@@ -642,10 +660,6 @@ button:hover {
     background: linear-gradient(135deg, #3b4048, #1c2024) !important;
     box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08) !important;
 }
-.quit-btn {
-    background: linear-gradient(135deg, var(--danger), #7a1c14) !important;
-}
-
 /* --- Character select: cinematic hero cards instead of plain buttons --- */
 #charSelect {
     background: 
@@ -659,7 +673,7 @@ button:hover {
         0 0 60px rgba(255,140,20,0.12),
         0 25px 60px rgba(0,0,0,0.6),
         inset 0 1px 0 rgba(255,255,255,0.06);
-    padding: 38px 24px !important;
+    padding: clamp(18px, 5vw, 38px) clamp(10px, 4vw, 24px) !important;
     overflow: hidden;
 }
 #charSelect::before {
@@ -683,11 +697,11 @@ button:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    width: 220px;
-    padding: 22px 18px;
-    margin: 12px 14px;
-    font-size: 19px;
+    gap: clamp(6px, 1.5vw, 10px);
+    width: clamp(120px, 30vw, 220px);
+    padding: clamp(12px, 3vw, 22px) clamp(10px, 2.5vw, 18px);
+    margin: clamp(6px, 1.8vw, 12px) clamp(6px, 2vw, 14px);
+    font-size: clamp(13px, 3.2vw, 19px);
     clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
     background: linear-gradient(160deg, rgba(20,22,28,0.9), rgba(10,11,15,0.95));
     border: 1px solid rgba(255,255,255,0.08);
@@ -695,8 +709,8 @@ button:hover {
     transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
 .char-portrait {
-    width: 68px;
-    height: 68px;
+    width: clamp(42px, 12vw, 68px);
+    height: clamp(42px, 12vw, 68px);
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
@@ -745,7 +759,7 @@ button:hover {
 }
 .name-tag {
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: clamp(13px, 3.5vw, 20px);
     letter-spacing: 2px;
 }
 #roundText {
@@ -1080,7 +1094,7 @@ button:hover {
  </div>
  <!-- Abandon button-ai ippadi maathuna screen UI-laye direct-ah click panni pause pannalam -->
 <!--  New Fixed Button Line -->
-<button class="quit-btn" onclick="togglePause(true)" ontouchstart="togglePause(true)" style="background: #34495e; padding: 8px 18px; font-size: 13px; margin-top: 10px; border-radius: 8px; position: relative; z-index: 300; pointer-events: auto;">⏸️ PAUSE MATCH</button>
+<button class="quit-btn" onclick="togglePause(true)" ontouchstart="togglePause(true)" aria-label="Pause Match" style="z-index: 300; pointer-events: auto;">⏸️</button>
 </div>
 
 <div id="authOverlay">
@@ -1881,13 +1895,26 @@ function forceLandscapeLock() {
 // Full Screen Address Bar Suppression Core Wrapper Function
 function activateLeafVillageFullScreen() {
     const docEl = document.documentElement;
-    if (docEl.requestFullscreen) {
-        docEl.requestFullscreen();
-    } else if (docEl.webkitRequestFullscreen) { /* Chrome & Safari */
-        docEl.webkitRequestFullscreen();
-    } else if (docEl.mozRequestFullScreen) {
-        docEl.mozRequestFullScreen();
+    // Already fullscreen (e.g. re-triggered on a later match start) — nothing to do.
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        setTimeout(resizeGameCanvas, 300);
+        return;
     }
+    try {
+        let req = null;
+        if (docEl.requestFullscreen) {
+            req = docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) { /* Chrome & Safari */
+            req = docEl.webkitRequestFullscreen();
+        } else if (docEl.mozRequestFullScreen) {
+            req = docEl.mozRequestFullScreen();
+        }
+        // Some mobile browsers return a Promise that silently rejects (e.g. gesture
+        // requirement not met) — catch it so it doesn't surface as an unhandled error.
+        if (req && typeof req.catch === "function") {
+            req.catch(() => {});
+        }
+    } catch (e) { /* Fullscreen not supported/allowed — game still works windowed */ }
     setTimeout(resizeGameCanvas, 300);
 }
 
@@ -2601,6 +2628,12 @@ function reset() {
 }
 
 function startGame() {
+    // Re-engage fullscreen every time a real match starts. Previously this only ever
+    // fired once, from the "ENTER WORLD" button on the very first screen — so any match
+    // started afterwards (bot rematch, online match, next round from menu) never
+    // re-requested fullscreen if the browser had exited it in between.
+    activateLeafVillageFullScreen();
+
     gameRunning = false;
     showCharacters = false;
     document.getElementById("startScreen").style.display = "none";
