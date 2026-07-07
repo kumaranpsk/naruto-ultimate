@@ -990,7 +990,7 @@ button:hover {
 <div id="onlineReadyScreen" style="text-align:center;">
     <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">ROOM READY!</h3>
     <p id="onlineReadySummary" style="font-size:15px; color:#eee; margin:15px 0;"></p>
-    <p style="color:#f39c12; font-size:13px;">🚧 Live battle sync is coming in the next update — room setup, coin toss, and character pick are ready now!</p>
+    <button onclick="requestStartOnlineMatch()" style="background:#c0392b; border: 2px solid white;">⚔️ START MATCH</button>
     <br>
     <button class="back-btn" onclick="leaveOnlineRoom()">⬅ Return to Menu</button>
 </div>
@@ -2185,6 +2185,16 @@ let myRoomRole = null;        // "host" (room creator) or "guest" (joiner)
 let roomListenerRef = null;   // the active rtdb listener, so we can detach it on leave
 let lastHandledRoomStatus = null; // guards against Firebase re-firing the listener on every field update
 
+// --- LIVE BATTLE SYNC: each client is authoritative for their own p1 (real physics/damage);
+// the opponent shows up locally as p2, fully puppeted from what they broadcast — no local
+// physics or damage computation ever runs on a synced p2 in online mode. ---
+let isOnlineMatch = false;
+let onlineOpponentRole = null;    // the OTHER player's role, so we know which DB path to listen to
+let liveStateListenerRef = null;
+let attackEventListenerRef = null;
+let lastProcessedAttackTs = 0;    // ignores stale/duplicate attack events on re-subscribe
+let broadcastFrameCounter = 0;    // throttles how often we push our own state to Firebase
+
 function generateRoomCode() {
     return String(Math.floor(1000 + Math.random() * 9000)); // 4-digit code, e.g. "4829"
 }
@@ -2320,13 +2330,104 @@ function listenToRoom(code) {
             const winnerIsMe = (room.tossWinnerRole === myRoomRole);
             const myPickedChar = winnerIsMe ? room.winnerChar : (room.winnerChar === "naruto" ? "sasuke" : "naruto");
             const opponentChar = (myPickedChar === "naruto") ? "sasuke" : "naruto";
-            // Reuse the existing myChar/enemyChar globals so a future fight-sync update can hook straight in
+            // Reuse the existing myChar/enemyChar globals so the fight-sync system hooks straight in
             myChar = myPickedChar;
             enemyChar = opponentChar;
 
             document.getElementById("onlineReadySummary").innerText =
                 "You are playing as " + myPickedChar.toUpperCase() + ". Opponent is " + opponentChar.toUpperCase() + ".";
         }
+
+        // --- LIVE BATTLE: either player can hit "Start Match" — whichever click lands first writes this
+        // status, and BOTH clients react to it here, so the match always launches in sync. ---
+        if (room.status === "in_match" && lastHandledRoomStatus !== "in_match") {
+            lastHandledRoomStatus = "in_match";
+            startOnlineMatch();
+        }
+    });
+}
+
+function requestStartOnlineMatch() {
+    if (!currentRoomCode) return;
+    rtdb.ref('rooms/' + currentRoomCode).update({ status: "in_match" });
+}
+
+// --- LIVE BATTLE SYNC ---
+
+function startOnlineMatch() {
+    isOnlineMatch = true;
+    onlineOpponentRole = (myRoomRole === "host") ? "guest" : "host";
+    lastProcessedAttackTs = Date.now(); // ignore any leftover attack events from before the match began
+    document.getElementById("onlineReadyScreen").style.display = "none";
+    listenToLiveMatch();
+    setDifficulty("medium"); // reuses the existing reset()+startGame() flow — difficulty itself is unused since bot() never runs in online mode
+}
+
+function listenToLiveMatch() {
+    if (liveStateListenerRef) liveStateListenerRef.off();
+    if (attackEventListenerRef) attackEventListenerRef.off();
+
+    // Continuous channel: the opponent's real p1, mirrored onto our local p2 every tick they broadcast
+    liveStateListenerRef = rtdb.ref('rooms/' + currentRoomCode + '/liveState/' + onlineOpponentRole);
+    liveStateListenerRef.on('value', (snap) => {
+        const s = snap.val();
+        if (!s || !isOnlineMatch) return;
+        p2.x = s.x; p2.y = s.y;
+        p2.health = s.health; p2.chakra = s.chakra;
+        p2.isBlocking = s.isBlocking; p2.isRaging = s.isRaging;
+        p2.combo = s.combo || 0;
+        p2.state = s.state; p2.frame = s.frame || 0;
+        p2.attacking = s.attacking; p2.attackKind = s.attackKind; p2.meleeSet = s.meleeSet;
+    });
+
+    // Discrete channel: one-off attack triggers (kunai/melee/ultimate), injected straight into the
+    // existing single-player collision code so no new hit-detection logic is needed at all.
+    attackEventListenerRef = rtdb.ref('rooms/' + currentRoomCode + '/attackEvents/' + onlineOpponentRole);
+    attackEventListenerRef.on('value', (snap) => {
+        const ev = snap.val();
+        if (!ev || !isOnlineMatch) return;
+        if (ev.ts <= lastProcessedAttackTs) return; // already handled, or stale from before this match
+        lastProcessedAttackTs = ev.ts;
+
+        if (ev.type === 'melee') {
+            // Reuses checkMeleeHits() as-is — it already loops over both p1 and p2 looking for a live swing
+            p2.attacking = true;
+            p2.attackKind = 'melee';
+            p2.meleeSet = ev.meleeSet;
+            p2.frame = 0;
+            p2.meleeHasHit = false;
+        } else {
+            // kunai / rasengan / chidori — reuses the existing attacks[] projectile collision code as-is
+            attacks.push({
+                x: p2.x + 50, y: p2.y + 60,
+                dir: (p1.x > p2.x) ? 1 : -1,
+                owner: "p2", type: ev.type, angle: 0, damage: 15
+            });
+            p2.attacking = true;
+            p2.attackKind = (ev.type === 'rasengan' || ev.type === 'chidori') ? 'special' : null;
+            p2.frame = 0;
+        }
+    });
+}
+
+function broadcastMyState() {
+    broadcastFrameCounter++;
+    if (broadcastFrameCounter % 3 !== 0) return; // ~20 updates/sec at 60fps — plenty smooth, keeps Firebase writes light
+    if (!currentRoomCode || !myRoomRole) return;
+    rtdb.ref('rooms/' + currentRoomCode + '/liveState/' + myRoomRole).set({
+        x: p1.x, y: p1.y,
+        health: p1.health, chakra: p1.chakra,
+        isBlocking: p1.isBlocking, isRaging: p1.isRaging,
+        combo: p1.combo,
+        state: p1.state, frame: p1.frame,
+        attacking: p1.attacking, attackKind: p1.attackKind, meleeSet: p1.meleeSet
+    });
+}
+
+function broadcastAttackEvent(type, meleeSet) {
+    if (!isOnlineMatch || !currentRoomCode || !myRoomRole) return;
+    rtdb.ref('rooms/' + currentRoomCode + '/attackEvents/' + myRoomRole).set({
+        type: type, meleeSet: meleeSet || null, ts: Date.now()
     });
 }
 
@@ -2684,6 +2785,9 @@ function createAttack(owner, type = "normal") {
         angle: 0,
         damage: 15
     });
+
+    // LIVE BATTLE SYNC: tell the opponent I threw this (no-op when not in an online match)
+    if (owner === "p1") broadcastAttackEvent(type);
 }
 
 // --- MELEE PUNCH ATTACK ('w' key): random sprite-set (a/b) punch, close-range, no projectile ---
@@ -2698,6 +2802,9 @@ function meleeAttack(owner) {
     attacker.attacking = true;
     attacker.frame = 0;
     attacker.meleeHasHit = false;
+
+    // LIVE BATTLE SYNC: tell the opponent I threw this (no-op when not in an online match)
+    if (owner === "p1") broadcastAttackEvent('melee', attacker.meleeSet);
 
     // NINJA-STORM-STYLE HOMING DASH: if the enemy isn't already in melee range, automatically dash
     // straight toward them the instant the attack starts — the strike always closes the gap on its own,
@@ -3069,12 +3176,17 @@ if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
             if (keys.left) p1.vx = -8 * p1RageSpeed;
             if (keys.right) p1.vx = 8 * p1RageSpeed;
 
-            // Bot Logic
-            bot();
+            // Bot Logic (single-player) OR broadcast my state to the opponent (online match)
+            if (isOnlineMatch) {
+                broadcastMyState();
+            } else {
+                bot();
+            }
 
 
             // Update All Ninjas
             [p1, p2].forEach(p => {
+                if (isOnlineMatch && p === p2) return; // p2 is a network puppet — position/animation come entirely from sync, no local physics
                 p.update(); // Update physics and animation state
                 p.x = Math.max(0, Math.min(canvas.width - 110, p.x));
                 if (p.chakra < 100) p.chakra += 0.12;
@@ -3445,6 +3557,19 @@ function exitGame() {
     showCharacters = false;
     isPaused = false;
     cancelAnimationFrame(loopId);
+
+    // 1b. LIVE BATTLE SYNC: detach Firebase listeners and close out the room if we were mid online-match
+    if (isOnlineMatch) {
+        if (liveStateListenerRef) { liveStateListenerRef.off(); liveStateListenerRef = null; }
+        if (attackEventListenerRef) { attackEventListenerRef.off(); attackEventListenerRef = null; }
+        if (roomListenerRef) { roomListenerRef.off(); roomListenerRef = null; }
+        if (currentRoomCode && myRoomRole === "host") rtdb.ref('rooms/' + currentRoomCode).remove();
+        isOnlineMatch = false;
+        onlineOpponentRole = null;
+        currentRoomCode = null;
+        myRoomRole = null;
+        lastHandledRoomStatus = null;
+    }
     
     // 2. Hide Pause Menu screen layout instantly if active
     document.getElementById("pauseScreen").style.display = "none";
