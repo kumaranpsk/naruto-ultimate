@@ -353,17 +353,17 @@ canvas {
         }
 
         .bar-container { 
-            width: clamp(150px, 40vw, 320px); 
+            width: clamp(110px, 32vw, 230px); 
             margin-bottom: 5px; 
-            background: var(--dark-glass); 
-            padding: clamp(6px, 1.8vw, 10px); 
+            background: none; 
+            padding: clamp(3px, 1vw, 6px); 
             border-radius: 15px; 
-            border: 1px solid var(--glass); 
+            border: none; 
         }
 
         .bar { 
             width: 100%; 
-            height: clamp(12px, 3.2vw, 20px); 
+            height: clamp(8px, 2.2vw, 14px); 
             background: #222; 
             border-radius: 11px; 
             overflow: hidden; 
@@ -379,10 +379,10 @@ canvas {
 
         .chakra-bar { 
             width: 100%; 
-            height: clamp(6px, 1.8vw, 10px); 
+            height: clamp(4px, 1.2vw, 8px); 
             background: #111; 
             border-radius: 5px; 
-            margin-top: 5px; 
+            margin-top: 4px; 
             overflow: hidden; 
         }
 
@@ -544,7 +544,7 @@ canvas {
             color: gold; 
         }
 
-        .score { font-size: 16px; color: #fff; font-weight: 900; }
+        .score { font-size: clamp(11px, 2.6vw, 16px); color: #fff; font-weight: 900; text-shadow: 0 1px 6px rgba(0,0,0,0.9), 0 0 3px rgba(0,0,0,0.9); }
 /* ================================================================
    AAA CINEMATIC OVERHAUL — richer palette, energy atmosphere,
    angular ninja-styled panels/buttons, dramatic typography
@@ -674,7 +674,8 @@ button:hover {
         0 25px 60px rgba(0,0,0,0.6),
         inset 0 1px 0 rgba(255,255,255,0.06);
     padding: clamp(18px, 5vw, 38px) clamp(10px, 4vw, 24px) !important;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 #charSelect::before {
     content: "";
@@ -697,20 +698,21 @@ button:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: clamp(6px, 1.5vw, 10px);
-    width: clamp(120px, 30vw, 220px);
-    padding: clamp(12px, 3vw, 22px) clamp(10px, 2.5vw, 18px);
-    margin: clamp(6px, 1.8vw, 12px) clamp(6px, 2vw, 14px);
-    font-size: clamp(13px, 3.2vw, 19px);
+    gap: clamp(4px, 1vw, 10px);
+    width: clamp(96px, 26vw, 220px);
+    padding: clamp(8px, 2vw, 22px) clamp(6px, 1.8vw, 18px);
+    margin: clamp(4px, 1.2vw, 12px) clamp(4px, 1.4vw, 14px);
+    font-size: clamp(11px, 2.6vw, 19px);
     clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
     background: linear-gradient(160deg, rgba(20,22,28,0.9), rgba(10,11,15,0.95));
     border: 1px solid rgba(255,255,255,0.08);
     box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
     transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    vertical-align: top;
 }
 .char-portrait {
-    width: clamp(42px, 12vw, 68px);
-    height: clamp(42px, 12vw, 68px);
+    width: clamp(32px, 8vw, 68px);
+    height: clamp(32px, 8vw, 68px);
     border-radius: 50%;
     object-fit: cover;
     object-position: top center;
@@ -753,13 +755,13 @@ button:hover {
 
 /* --- Battle HUD: premium name-plates & VS energy divider --- */
 .bar-container {
-    background: linear-gradient(160deg, rgba(15,12,10,0.9), rgba(5,5,6,0.92));
-    border: 1px solid rgba(255,255,255,0.06);
-    box-shadow: 0 10px 26px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,140,20,0.08);
+    background: none;
+    border: none;
+    box-shadow: none;
 }
 .name-tag {
     font-family: var(--font-display);
-    font-size: clamp(13px, 3.5vw, 20px);
+    font-size: clamp(11px, 2.8vw, 18px);
     letter-spacing: 2px;
 }
 #roundText {
