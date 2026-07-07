@@ -2077,6 +2077,38 @@ function applySavedHUDLayout() {
 
 setTimeout(applySavedHUDLayout, 500);
 
+// --- RESET HUD TO DEFAULT LAYOUT ---
+// Clears every saved custom position/size for the mobile control buttons and
+// strips the inline styles we applied, so the original CSS stylesheet
+// positions/sizes (the "factory" layout) take over again immediately.
+function resetHUDToDefault() {
+    if (!confirm("Reset mobile controls to default layout? This clears all your custom positions and sizes.")) return;
+
+    mobBtnIds.forEach(id => {
+        localStorage.removeItem(`custom_hud_${id}_left`);
+        localStorage.removeItem(`custom_hud_${id}_top`);
+        localStorage.removeItem(`custom_hud_${id}_size`);
+
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.left = "";
+            el.style.top = "";
+            el.style.bottom = "";
+            el.style.right = "";
+            el.style.width = "";
+            el.style.height = "";
+            el.style.fontSize = "";
+        }
+    });
+
+    // Reset the size-slider panel back to its neutral state too
+    currentSelectedScalingId = null;
+    const label = document.getElementById("hudSizeLabelDisplay");
+    if (label) label.innerText = "Tap Button to Resize";
+    const slider = document.getElementById("hudSizeSliderRange");
+    if (slider) slider.value = 72;
+}
+
 let currentSelectedScalingId = null;
 
 function setSelectedElementForScaling(id) {
@@ -2136,7 +2168,7 @@ function startCustomizing() {
     doneBtn.innerText = "💾 SAVE HUD LAYOUT";
     doneBtn.id = "doneCustomBtn";
     doneBtn.style.position = "fixed"; doneBtn.style.top = "20px"; doneBtn.style.left = "50%";
-    doneBtn.style.transform = "translateX(-50%)"; doneBtn.style.zIndex = "1000"; doneBtn.style.background = "#2ecc71";
+    doneBtn.style.transform = "translateX(-125%)"; doneBtn.style.zIndex = "1000"; doneBtn.style.background = "#2ecc71";
     
     doneBtn.onclick = () => {
         isCustomizing = false;
@@ -2145,8 +2177,21 @@ function startCustomizing() {
         document.getElementById("settingsScreen").style.display = "block";
         if(document.getElementById("hudSizeControllerPanel")) document.getElementById("hudSizeControllerPanel").style.display = "none";
         doneBtn.remove();
+        if (document.getElementById("resetHudBtn")) document.getElementById("resetHudBtn").remove();
     };
     document.body.appendChild(doneBtn);
+
+    // Reset-to-default button, sitting right next to Save
+    const resetBtn = document.createElement("button");
+    resetBtn.innerText = "🔄 RESET TO DEFAULT";
+    resetBtn.id = "resetHudBtn";
+    resetBtn.style.position = "fixed"; resetBtn.style.top = "20px"; resetBtn.style.left = "50%";
+    resetBtn.style.transform = "translateX(15%)"; resetBtn.style.zIndex = "1000"; resetBtn.style.background = "#c0392b";
+
+    resetBtn.onclick = () => {
+        resetHUDToDefault();
+    };
+    document.body.appendChild(resetBtn);
 }
 
 setTimeout(applySavedHUDLayout, 500);
@@ -3651,11 +3696,25 @@ function exitGame() {
 
     // 1b. LIVE BATTLE SYNC: detach Firebase listeners and close out the room if we were mid online-match
     if (isOnlineMatch) {
+        // Explicitly mark ourselves offline FIRST — this is the actual signal the opponent's
+        // presence listener reacts to. Previously we relied only on onDisconnect(), which
+        // only fires on a real connection drop (tab closed/network lost), not on a normal
+        // "Quit" while the app stays open — so a deliberate quit never showed up as offline.
+        if (currentRoomCode && myRoomRole) {
+            rtdb.ref('rooms/' + currentRoomCode + '/presence/' + myRoomRole).set('offline').catch(() => {});
+        }
         if (liveStateListenerRef) { liveStateListenerRef.off(); liveStateListenerRef = null; }
         if (attackEventListenerRef) { attackEventListenerRef.off(); attackEventListenerRef = null; }
         if (opponentPresenceRef) { opponentPresenceRef.off(); opponentPresenceRef = null; }
         if (roomListenerRef) { roomListenerRef.off(); roomListenerRef = null; }
-        if (currentRoomCode && myRoomRole === "host") rtdb.ref('rooms/' + currentRoomCode).remove();
+        // Delay the host's room deletion — deleting the room wipes the presence node too,
+        // which turns the opponent's 'value' snapshot into null instead of 'offline', so the
+        // disconnect prompt would never trigger for them. Give the 'offline' write above time
+        // to actually propagate before the room disappears.
+        if (currentRoomCode && myRoomRole === "host") {
+            const roomToRemove = currentRoomCode;
+            setTimeout(() => rtdb.ref('rooms/' + roomToRemove).remove(), 1500);
+        }
         isOnlineMatch = false;
         onlineOpponentRole = null;
         currentRoomCode = null;
