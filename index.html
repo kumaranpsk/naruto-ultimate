@@ -1449,6 +1449,9 @@ function useFireball(owner) {
         timer: 0,
         isFinished: false 
     });
+
+    // LIVE BATTLE SYNC: tell the opponent I threw this (no-op when not in an online match)
+    if (owner === "p1") broadcastAttackEvent('fireball');
 }
 
 
@@ -2628,6 +2631,29 @@ function listenToLiveMatch() {
             p2.meleeSet = ev.meleeSet;
             p2.frame = 0;
             p2.meleeHasHit = false;
+        } else if (ev.type === 'shadowClone') {
+            // Reuses the existing clones[] processing as-is — it already looks up target via c.owner generically
+            let positions = [p2.x - 70, p2.x + 70];
+            positions.forEach(spawnX => {
+                let finalX = Math.max(50, Math.min(canvas.width - 150, spawnX));
+                clones.push({ x: finalX, y: 440, life: 250, owner: "p2", state: 'run', frame: 0 });
+            });
+        } else if (ev.type === 'sharingan') {
+            // Reuses the existing cinematic sequence as-is — cinematicAttacker already supports being "p2"
+            cinematicAttacker = "p2";
+            sharinganCinematic = true;
+            cinematicStep = 0;
+            cinematicTimer = 0;
+            triggerShake(10);
+        } else if (ev.type === 'fireball') {
+            // Reuses the existing fireball projectile/collision code as-is
+            const dir = (p1.x > p2.x) ? 1 : -1;
+            attacks.push({
+                type: "fireball",
+                x: p2.x + (dir === 1 ? 50 : -50), y: p2.y + 20,
+                dir: dir, owner: "p2", frame: 0, timer: 0, isFinished: false
+            });
+            p2.attacking = true;
         } else {
             // kunai / rasengan / chidori — reuses the existing attacks[] projectile collision code as-is
             attacks.push({
@@ -2966,6 +2992,9 @@ function shadowClone(owner) {
             frame: 0
         });
     });
+
+    // LIVE BATTLE SYNC: tell the opponent I threw this (no-op when not in an online match)
+    if (owner === "p1") broadcastAttackEvent('shadowClone');
 }
 
 
@@ -2983,6 +3012,9 @@ function activateSharingan(owner) {
     sharinganCinematic = true;
     cinematicStep = 0; cinematicTimer = 0;
     triggerShake(10);
+
+    // LIVE BATTLE SYNC: tell the opponent I threw this (no-op when not in an online match)
+    if (owner === "p1") broadcastAttackEvent('sharingan');
 }
 
 
@@ -3455,6 +3487,11 @@ if (vicImg && vicImg.complete && vicImg.naturalWidth !== 0) {
             // Update All Ninjas
             [p1, p2].forEach(p => {
                 if (isOnlineMatch && p === p2) {
+                    if (sharinganCinematic) {
+                        // The cinematic sequence (see below) directly drives p2's position for its
+                        // duration on both clients — don't fight it with the position-sync override.
+                        return;
+                    }
                     // p2 is a network puppet in online mode: position/health/chakra come entirely from
                     // the liveState sync (already applied by the listener above). We still call update()
                     // so its OWN attack-animation timer ticks and resets 'attacking' locally and correctly —
