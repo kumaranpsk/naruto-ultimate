@@ -140,6 +140,66 @@
     to { box-shadow: 0 0 20px #00ffff; }
 }
 
+/* --- PSP-STYLE D-PAD (movement cluster): one compact plus-shaped pad instead of scattered buttons --- */
+#dpadCluster {
+    position: absolute;
+    bottom: 10%; left: 5%;
+    width: 168px; height: 168px;
+    pointer-events: auto;
+}
+.dpad-btn {
+    position: absolute;
+    width: 56px; height: 56px;
+    padding: 0; margin: 0; box-sizing: border-box;
+    font-size: 20px;
+    font-weight: bold;
+    border: 2px solid rgba(243, 156, 18, 0.4);
+    background: radial-gradient(circle, rgba(40, 40, 40, 0.75), rgba(15, 15, 15, 0.9));
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    transition: transform 0.05s;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.dpad-btn:active { transform: scale(0.9); background: radial-gradient(circle, var(--primary), var(--secondary)); }
+#dpadUp    { top: 0;   left: 56px; border-radius: 10px 10px 0 0; }
+#dpadDown  { top: 112px; left: 56px; border-radius: 0 0 10px 10px; }
+#dpadLeft  { top: 56px; left: 0;   border-radius: 10px 0 0 10px; }
+#dpadRight { top: 56px; left: 112px; border-radius: 0 10px 10px 0; }
+
+/* --- PSP-STYLE DIAMOND (action cluster): Triangle/Circle/Cross/Square in classic PlayStation layout --- */
+#diamondCluster {
+    position: absolute;
+    bottom: 12%; right: 6%;
+    width: 190px; height: 190px;
+    pointer-events: auto;
+}
+.diamond-btn {
+    position: absolute;
+    width: 68px; height: 68px;
+    padding: 0; margin: 0; box-sizing: border-box;
+    border-radius: 50%;
+    font-size: 26px;
+    font-weight: bold;
+    border: 2px solid rgba(255,255,255,0.35);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: transform 0.05s;
+}
+.diamond-btn:active { transform: scale(0.88); }
+#btnTriangle { top: 0;   left: 61px; background: radial-gradient(circle, rgba(46,204,113,0.55), rgba(20,90,50,0.85)); border-color: #2ecc71; color: #d6ffe6; }
+#btnCircle   { top: 61px; left: 122px; background: radial-gradient(circle, rgba(231,76,60,0.55), rgba(120,20,20,0.85)); border-color: #e74c3c; color: #ffdcd6; }
+#btnCross    { top: 122px; left: 61px; background: radial-gradient(circle, rgba(52,152,219,0.55), rgba(20,60,110,0.85)); border-color: #3498db; color: #d6ecff; }
+#btnSquare   { top: 61px; left: 0;   background: radial-gradient(circle, rgba(155,89,182,0.55), rgba(80,30,100,0.85)); border-color: #9b59b6; color: #f0d6ff; }
+
+.custom-mode #dpadCluster .dpad-btn, .custom-mode #diamondCluster .diamond-btn {
+    border: 2px dashed #00ffff !important;
+    animation: layoutPulse 1s infinite alternate;
+}
+
 #bg {
     position: fixed;
     top: 0; left: 0;
@@ -865,17 +925,21 @@ button:hover {
 </div>
 
 <div id="mobileControls">
-  <button id="btnLeft" class="m-btn" style="position: absolute; bottom: 12%; left: 6%;" ontouchstart="startMove('left')" ontouchend="stopMove('left')">⬅️</button>
-  <button id="btnRight" class="m-btn" style="position: absolute; bottom: 12%; left: 16%;" ontouchstart="startMove('right')" ontouchend="stopMove('right')">➡️</button>
-  
-  <button id="btnC1" class="m-btn" style="position: absolute; bottom: 25%; right: 20%; color: #3498db; border-color: #3498db;" ontouchstart="rasengan()">C1</button>
-  <button id="btnC2" class="m-btn" style="position: absolute; bottom: 42%; right: 13%; color: #9b59b6; border-color: #9b59b6;" ontouchstart="chidori()">C2</button>
-  <button id="btnJump" class="m-btn" style="position: absolute; bottom: 42%; right: 4%; color: #2ecc71; border-color: #2ecc71;" ontouchstart="jump()">⬆️</button>
-  
-  <button id="btnN" class="m-btn" style="position: absolute; bottom: 10%; right: 21%; color: #f1c40f; border-color: #f1c40f;" ontouchstart="shadowClone('p1')">N</button>
-  <button id="btnFire" class="m-btn btn-fire" style="position: absolute; bottom: 8%; right: 12%;" ontouchstart="if(myChar==='sasuke') useFireball('p1')">🔥</button>
-  <button id="btnS" class="m-btn" style="position: absolute; bottom: 24%; right: 4%; color: #e74c3c; border-color: #e74c3c;" ontouchstart="activateSharingan('p1')">S</button>
-  <button id="btnBlock" class="m-btn" style="position: absolute; bottom: 12%; left: 32%;" ontouchstart="startBlock()" ontouchend="stopBlock()">🛡️</button>
+  <!-- PSP-STYLE D-PAD: one compact movement cluster instead of scattered buttons -->
+  <div id="dpadCluster">
+    <button id="dpadUp" class="dpad-btn" ontouchstart="jump()">⬆️</button>
+    <button id="dpadLeft" class="dpad-btn" ontouchstart="startMove('left')" ontouchend="stopMove('left')">⬅️</button>
+    <button id="dpadRight" class="dpad-btn" ontouchstart="startMove('right')" ontouchend="stopMove('right')">➡️</button>
+    <button id="dpadDown" class="dpad-btn" ontouchstart="startBlock()" ontouchend="stopBlock()">🛡️</button>
+  </div>
+
+  <!-- PSP-STYLE DIAMOND: Triangle=Ultimate, Circle=Melee, Cross=Kunai, Square=Special (hold=fireball for Sasuke) -->
+  <div id="diamondCluster">
+    <button id="btnTriangle" class="diamond-btn" ontouchstart="useUltimate()">▲</button>
+    <button id="btnCircle" class="diamond-btn" ontouchstart="meleeAttack('p1')">●</button>
+    <button id="btnCross" class="diamond-btn" ontouchstart="isFiring=true" ontouchend="isFiring=false">✕</button>
+    <button id="btnSquare" class="diamond-btn" ontouchstart="squareBtnDown()" ontouchend="squareBtnUp()">■</button>
+  </div>
 </div>
 
 <div id="bg"></div>
@@ -1979,7 +2043,7 @@ function setFPS(val) {
 }
 
 // --- DYNAMIC DRAG ENGINE (MOBILE TOUCH + LAPTOP MOUSE FULL SUPPORT) ---
-const mobBtnIds = ["btnLeft", "btnRight", "btnC1", "btnC2", "btnJump", "btnN", "btnFire", "btnS", "btnBlock"];
+const mobBtnIds = ["dpadCluster", "diamondCluster"];
 
 function makeElementCustomDraggable(id) {
     const el = document.getElementById(id);
@@ -2096,9 +2160,14 @@ function applySavedHUDLayout() {
             
             // 2. Restore Custom Sizing Multipliers Engine Safely
             if (savedSize) {
-                el.style.width = savedSize + "px";
-                el.style.height = savedSize + "px";
-                el.style.fontSize = Math.round(savedSize * 0.27) + "px"; // Balanced text padding adaptation ratio
+                if (id === "dpadCluster" || id === "diamondCluster") {
+                    el.style.transform = `scale(${savedSize / 100})`;
+                    el.style.transformOrigin = (id === "dpadCluster") ? "bottom left" : "bottom right";
+                } else {
+                    el.style.width = savedSize + "px";
+                    el.style.height = savedSize + "px";
+                    el.style.fontSize = Math.round(savedSize * 0.27) + "px"; // Balanced text padding adaptation ratio
+                }
             }
         }
     });
@@ -2127,6 +2196,7 @@ function resetHUDToDefault() {
             el.style.width = "";
             el.style.height = "";
             el.style.fontSize = "";
+            el.style.transform = "";
         }
     });
 
@@ -2135,7 +2205,7 @@ function resetHUDToDefault() {
     const label = document.getElementById("hudSizeLabelDisplay");
     if (label) label.innerText = "Tap Button to Resize";
     const slider = document.getElementById("hudSizeSliderRange");
-    if (slider) slider.value = 72;
+    if (slider) slider.value = 100;
 }
 
 let currentSelectedScalingId = null;
@@ -2145,16 +2215,30 @@ function setSelectedElementForScaling(id) {
     const sliderPanel = document.getElementById("hudSizeControllerPanel");
     if (sliderPanel) {
         sliderPanel.style.display = "flex";
-        const activeSavedSize = localStorage.getItem(`custom_hud_${id}_size`) || "72";
-        document.getElementById("hudSizeSliderRange").value = activeSavedSize;
-        document.getElementById("hudSizeLabelDisplay").innerText = id.replace("btn","") + ` Size: ${activeSavedSize}px`;
+        const isCluster = (id === "dpadCluster" || id === "diamondCluster");
+        const defaultVal = isCluster ? "100" : "72";
+        const activeSavedSize = localStorage.getItem(`custom_hud_${id}_size`) || defaultVal;
+        const slider = document.getElementById("hudSizeSliderRange");
+        if (isCluster) { slider.min = "50"; slider.max = "150"; } else { slider.min = "40"; slider.max = "110"; }
+        slider.value = activeSavedSize;
+        document.getElementById("hudSizeLabelDisplay").innerText = id.replace("Cluster","") + ` Size: ${activeSavedSize}${isCluster ? "%" : "px"}`;
     }
 }
 
 function applyElementDynamicScale(id, sizeValue) {
     const el = document.getElementById(id);
     if (!el) return;
-    
+
+    if (id === "dpadCluster" || id === "diamondCluster") {
+        // Cluster containers scale as one whole unit — their internal buttons use fixed pixel offsets,
+        // so resizing width/height directly wouldn't scale them; a CSS transform does it correctly.
+        const scaleFactor = sizeValue / 100; // slider represents a percentage for clusters (100 = original size)
+        el.style.transform = `scale(${scaleFactor})`;
+        el.style.transformOrigin = (id === "dpadCluster") ? "bottom left" : "bottom right";
+        localStorage.setItem(`custom_hud_${id}_size`, sizeValue);
+        return;
+    }
+
     el.style.width = sizeValue + "px";
     el.style.height = sizeValue + "px";
     el.style.fontSize = Math.round(sizeValue * 0.27) + "px"; // Responsive button label scaling
@@ -3015,6 +3099,36 @@ function chidori() {
     p1.frame = 0;
     sounds.chidori.play();
     createAttack("p1", "chidori");
+}
+
+// --- PSP-STYLE CONSOLIDATED CONTROLS: one Ultimate button and one Special button that automatically
+// call the right move for whichever character is being played — naruto/sasuke never both apply at once
+// anyway, so this loses zero functionality while cutting the button count in half. ---
+function useUltimate() {
+    if (myChar === "naruto") rasengan();
+    else if (myChar === "sasuke") chidori();
+}
+
+function useSpecialPower() {
+    if (myChar === "naruto") shadowClone("p1");
+    else if (myChar === "sasuke") activateSharingan("p1");
+}
+
+// Square button: tap = special power above; a longer hold additionally lets Sasuke throw a fireball
+// (kept as a hold-only bonus so the clean 4-button diamond doesn't need a 5th slot)
+let squareHoldTimer = null;
+function squareBtnDown() {
+    squareHoldTimer = setTimeout(() => {
+        if (myChar === "sasuke") useFireball("p1");
+        squareHoldTimer = null;
+    }, 500);
+}
+function squareBtnUp() {
+    if (squareHoldTimer) { // released before the hold threshold — treat it as a normal tap
+        clearTimeout(squareHoldTimer);
+        squareHoldTimer = null;
+        useSpecialPower();
+    }
 }
 
 
