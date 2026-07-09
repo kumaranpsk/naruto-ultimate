@@ -1545,6 +1545,7 @@ class Ninja {
         this.attackKind = null; // 'kunai' or 'melee' — which attack animation this.attacking currently means
         this.meleeSet = null; // 'a' or 'b' — randomly chosen sprite variant for the current melee swing
         this.meleeHasHit = false; // guards against landing more than one hit per swing
+        this.tailsFlashFrames = 0; // LIVE BATTLE SYNC: frames left to show the synced four-tails flash pose
 
         // --- BOT AI: dynamic engagement distance (no more fixed spacing) + move-usage balance ---
         this.engageMode = 'close'; // 'close' (brawl) or 'ranged' (poke) — re-rolled periodically
@@ -2724,6 +2725,15 @@ function listenToLiveMatch() {
                 dir: dir, owner: "p2", frame: 0, timer: 0, isFinished: false
             });
             p2.attacking = true;
+        } else if (ev.type === 'tails') {
+            // FOUR-TAILS: the full dash/attack sequence is a long, deeply p1-specific state machine
+            // (tailsFrame steps, movement, draw calls all hardcoded to "p1"). Rather than risk breaking
+            // that by rewriting it generically, we sync a simplified-but-real version here: a visible
+            // tails-sprite flash on p2 plus the actual 70-damage hit, so the move is both seen and felt.
+            p2.tailsFlashFrames = 30;
+            triggerShake(15);
+            const hitX = (p1.x > p2.x) ? p2.x + 100 : p2.x - 20;
+            applyBlockableDamage(p1, 70, hitX, p1.y + 60, true, p2);
         } else {
             // kunai / rasengan / chidori — reuses the existing attacks[] projectile collision code as-is
             attacks.push({
@@ -2983,15 +2993,7 @@ document.addEventListener("keydown", e => {
     }
 }
 if(e.key === keyBindings.tails) {
-    if(myChar === "naruto" && !p1.isTailsMode && p1.chakra >= 50) {
-        p1.isTailsMode = true;
-        p1.tailsFrame = 0;
-        p1.tailsTimer = 0;
-        p1.tailsLoopCount = 0; // Pudhu variable: loop count track panna
-        // Character thirumbi irukkura direction-ah edukkurom
-        p1.tailsDir = (p2.x > p1.x) ? 1 : -1; 
-        p1.chakra -= 50; // B click pannuna udanae chakra kuraiyum
-    }
+    useFourTails();
 }
 });
 document.addEventListener("keyup", e => {
@@ -3217,12 +3219,27 @@ function useSpecialPower() {
     else if (myChar === "sasuke") activateSharingan("p1");
 }
 
+// Four-Tails activation, extracted so both the 'b' keyboard shortcut and the mobile
+// long-press (see squareBtnDown below) trigger the exact same logic.
+function useFourTails() {
+    if (myChar === "naruto" && !p1.isTailsMode && p1.chakra >= 50) {
+        p1.isTailsMode = true;
+        p1.tailsFrame = 0;
+        p1.tailsTimer = 0;
+        p1.tailsLoopCount = 0;
+        p1.tailsDir = (p2.x > p1.x) ? 1 : -1;
+        p1.chakra -= 50;
+        broadcastAttackEvent('tails'); // LIVE BATTLE SYNC: opponent needs to know this happened too
+    }
+}
+
 // Square button: tap = special power above; a longer hold additionally lets Sasuke throw a fireball
-// (kept as a hold-only bonus so the clean 4-button diamond doesn't need a 5th slot)
+// or lets Naruto go Four-Tails (kept as a hold-only bonus so the clean 4-button diamond doesn't need a 5th slot)
 let squareHoldTimer = null;
 function squareBtnDown() {
     squareHoldTimer = setTimeout(() => {
         if (myChar === "sasuke") useFireball("p1");
+        else if (myChar === "naruto") useFourTails();
         squareHoldTimer = null;
     }, 500);
 }
@@ -3614,6 +3631,16 @@ if (showCharacters) {
     // Tails Mode-la irukkum podhu Naruto-va draw panna maattom (Vanish effect)
     if (!isP1Fireball && !p1.isTailsMode) p1.draw(p2.x); 
     if (!isP2Fireball) p2.draw(p1.x);
+
+    // FOUR-TAILS SYNC: brief tails-sprite flash on p2 when the opponent used it (see attackEvents 'tails' handler)
+    if (p2.tailsFlashFrames > 0) {
+        const flashImg = tailsSprites[8]; // a mid-attack frame, reused as a simple representative pose
+        if (flashImg && flashImg.complete) {
+            ctx.drawImage(flashImg, p2.x - 15, p2.y - 20, 100, 100);
+        }
+        p2.tailsFlashFrames--;
+    }
+
     checkMeleeHits();
     updateAndDrawHitSparks();
     updateAndDrawComboPopups();
