@@ -316,14 +316,65 @@ canvas {
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            gap: 30px; 
-            margin-bottom: 10px; 
+            gap: 22px; 
+            margin-bottom: 12px; 
         }
 
-        .header-side-img { 
-            width: 150px; 
-            height: auto; 
-            filter: drop-shadow(0 0 10px gold); 
+        /* --- ROUND INTRO PORTRAITS: fixed equal size + object-fit:cover, same treatment as the
+             character-select circular portraits, so Naruto and Sasuke always render identically sized --- */
+        .round-portrait-wrap {
+            width: 130px; height: 130px;
+            border-radius: 50%;
+            overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle, rgba(0,0,0,0.4), rgba(0,0,0,0.75));
+            animation: roundPortraitPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .round-portrait-naruto {
+            border: 3px solid #ff8c00;
+            box-shadow: 0 0 20px rgba(255,140,0,0.6), inset 0 0 15px rgba(255,140,0,0.25);
+        }
+        .round-portrait-sasuke {
+            border: 3px solid #3498db;
+            box-shadow: 0 0 20px rgba(52,152,219,0.6), inset 0 0 15px rgba(52,152,219,0.25);
+        }
+        .round-portrait-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: top center;
+        }
+        @keyframes roundPortraitPop {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .vs-badge {
+            font-family: var(--font-display);
+            font-size: 30px;
+            font-weight: 900;
+            color: gold;
+            text-shadow: 0 0 15px rgba(255,215,0,0.8), 0 0 5px black;
+            transform: rotate(-8deg);
+            animation: vsPulse 0.8s ease-in-out infinite alternate;
+        }
+        @keyframes vsPulse {
+            from { transform: rotate(-8deg) scale(1); }
+            to { transform: rotate(-8deg) scale(1.18); }
+        }
+
+        .round-vs-title {
+            font-family: var(--font-display);
+            font-size: 22px;
+            letter-spacing: 4px;
+            color: #f0f0f0;
+            text-shadow: 0 0 12px rgba(255,255,255,0.35), 0 0 4px black;
+            margin-bottom: 2px;
+        }
+        .round-vs-title .vs-word {
+            color: var(--primary);
+            font-size: 19px;
+            margin: 0 8px;
+            text-shadow: 0 0 12px var(--primary);
         }
 
         #roundText { 
@@ -917,9 +968,15 @@ button:hover {
 
 <div id="roundDisplay">
   <div id="roundHeaderContainer">
-    <img src="rsasuke.png" class="header-side-img">
-    <img src="rnaruto.png" class="header-side-img">
+    <div class="round-portrait-wrap round-portrait-naruto">
+      <img src="rnaruto.png" class="round-portrait-img" onerror="this.style.display='none'">
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="round-portrait-wrap round-portrait-sasuke">
+      <img src="rsasuke.png" class="round-portrait-img" onerror="this.style.display='none'">
+    </div>
   </div>
+  <div class="round-vs-title" id="roundVsTitle">NARUTO <span class="vs-word">VS</span> SASUKE</div>
   <div id="roundText">ROUND 1</div>
   <img id="winnerRoundImg" class="winner-img" style="display:none;">
 </div>
@@ -2563,6 +2620,12 @@ function showOpponentDisconnectedPrompt() {
     if (document.getElementById("opponentDisconnectedOverlay").style.display === "flex") return; // already showing
     isPaused = true;
     cancelAnimationFrame(loopId);
+    // DEFENSIVE: make sure no main-menu screen is showing behind the (semi-transparent) overlay
+    ["startScreen", "mainMenuButtons", "modeSelect", "charSelect", "onlineMenu", "createRoomScreen",
+     "joinRoomScreen", "coinTossScreen", "onlineCharSelect", "onlineReadyScreen"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+    });
     document.getElementById("opponentDisconnectedOverlay").style.display = "flex";
 }
 
@@ -2575,6 +2638,14 @@ function continueWithBot() {
     if (opponentPresenceRef) { opponentPresenceRef.off(); opponentPresenceRef = null; }
     p2.engageTimer = 0; // forces the bot's engagement-mode logic to re-roll immediately instead of using stale synced state
     p2.wantsToMelee = false;
+    // DEFENSIVE: same re-hide as above — the fight screen (game/ui/mobileControls) should be the only thing visible
+    ["startScreen", "mainMenuButtons", "modeSelect", "charSelect", "onlineMenu"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+    });
+    document.getElementById("game").style.display = "block";
+    document.getElementById("ui").style.display = "flex";
+    document.getElementById("mobileControls").style.display = "block";
     isPaused = false;
     lastFrameTime = performance.now();
     cancelAnimationFrame(loopId);
@@ -2583,12 +2654,11 @@ function continueWithBot() {
 
 function confirmWinByDisconnect() {
     document.getElementById("opponentDisconnectedOverlay").style.display = "none";
-    isOnlineMatch = false;
-    if (liveStateListenerRef) { liveStateListenerRef.off(); liveStateListenerRef = null; }
-    if (attackEventListenerRef) { attackEventListenerRef.off(); attackEventListenerRef = null; }
-    if (opponentPresenceRef) { opponentPresenceRef.off(); opponentPresenceRef = null; }
-    isPaused = false;
-    nextRound("p1"); // opponent left, so the remaining player takes the round/match
+    // FIX: this used to call nextRound("p1"), which only ever won the CURRENT round and then
+    // kept going into a bot-controlled next round — "Confirm Win" should end the whole match
+    // and return to the main menu instead, exactly like abandoning would.
+    alert((myChar || "You").toString().toUpperCase() + " WIN! Your opponent disconnected.");
+    exitGame();
 }
 
 function listenToLiveMatch() {
@@ -2814,6 +2884,7 @@ function endVideoAndStartFight() {
     
     rt.innerText = "ROUND " + currentRound;
     rh.style.display = "flex";
+    document.getElementById("roundVsTitle").style.display = "block";
     rw.style.display = "none";
     rd.style.display = "flex";
 
@@ -3336,6 +3407,7 @@ function nextRound(winner) {
     let rw = document.getElementById("winnerRoundImg");
     
     document.getElementById("roundHeaderContainer").style.display = "none";
+    document.getElementById("roundVsTitle").style.display = "none";
     rt.innerText = winnerName.toUpperCase() + " WINS ROUND!";
     rw.src = winnerName + "round.png"; 
     rw.style.display = "block"; 
