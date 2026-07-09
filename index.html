@@ -1545,7 +1545,6 @@ class Ninja {
         this.attackKind = null; // 'kunai' or 'melee' — which attack animation this.attacking currently means
         this.meleeSet = null; // 'a' or 'b' — randomly chosen sprite variant for the current melee swing
         this.meleeHasHit = false; // guards against landing more than one hit per swing
-        this.tailsFlashFrames = 0; // LIVE BATTLE SYNC: frames left to show the synced four-tails flash pose
 
         // --- BOT AI: dynamic engagement distance (no more fixed spacing) + move-usage balance ---
         this.engageMode = 'close'; // 'close' (brawl) or 'ranged' (poke) — re-rolled periodically
@@ -2726,11 +2725,16 @@ function listenToLiveMatch() {
             });
             p2.attacking = true;
         } else if (ev.type === 'tails') {
-            // FOUR-TAILS: the full dash/attack sequence is a long, deeply p1-specific state machine
-            // (tailsFrame steps, movement, draw calls all hardcoded to "p1"). Rather than risk breaking
-            // that by rewriting it generically, we sync a simplified-but-real version here: a visible
-            // tails-sprite flash on p2 plus the actual 70-damage hit, so the move is both seen and felt.
-            p2.tailsFlashFrames = 30;
+            // FOUR-TAILS SYNC: play the same 18-frame dash/attack sequence on p2 that p1 plays locally
+            // (transform -> offset -> dash-in -> vanish), just mirrored/direction-flipped toward p1.
+            // Damage is applied immediately here (not tied to animation completion) since the hit was
+            // already resolved on the attacker's client.
+            p2.isTailsMode = true;
+            p2.tailsFrame = 0;
+            p2.tailsTimer = 0;
+            p2.tailsMoveDist = 0;
+            p2.tailsDir = (p1.x > p2.x) ? 1 : -1;
+            p2.stuckCounter = 0;
             triggerShake(15);
             const hitX = (p1.x > p2.x) ? p2.x + 100 : p2.x - 20;
             applyBlockableDamage(p1, 70, hitX, p1.y + 60, true, p2);
@@ -3630,16 +3634,7 @@ if (showCharacters) {
 
     // Tails Mode-la irukkum podhu Naruto-va draw panna maattom (Vanish effect)
     if (!isP1Fireball && !p1.isTailsMode) p1.draw(p2.x); 
-    if (!isP2Fireball) p2.draw(p1.x);
-
-    // FOUR-TAILS SYNC: brief tails-sprite flash on p2 when the opponent used it (see attackEvents 'tails' handler)
-    if (p2.tailsFlashFrames > 0) {
-        const flashImg = tailsSprites[8]; // a mid-attack frame, reused as a simple representative pose
-        if (flashImg && flashImg.complete) {
-            ctx.drawImage(flashImg, p2.x - 15, p2.y - 20, 100, 100);
-        }
-        p2.tailsFlashFrames--;
-    }
+    if (!isP2Fireball && !p2.isTailsMode) p2.draw(p1.x);
 
     checkMeleeHits();
     updateAndDrawHitSparks();
@@ -3734,6 +3729,68 @@ if (showCharacters) {
         p1.tailsMoveDist = 0;
         p1.currentDir = null;
         p1.stuckCounter = 0;
+    }
+}
+
+// --- FOUR-TAILS SYNC (p2 side): mirrors the exact same phase/frame logic as p1's local version above,
+// so the opponent's four-tails move is seen as the full 18-frame dash/attack, not just a single flash
+// pose. Damage was already applied the instant the 'tails' event arrived (see attackEvents listener),
+// so this block is purely visual and never re-applies the hit.
+if (p2.isTailsMode) {
+    p2.tailsTimer++;
+
+    if (p2.tailsTimer % 5 === 0) {
+        if (p2.tailsFrame === 5) {
+            if (!p2.stuckCounter) p2.stuckCounter = 0;
+            p2.stuckCounter++;
+            if (p2.stuckCounter >= 5) {
+                p2.tailsFrame = 6;
+                p2.stuckCounter = 0;
+            }
+        } else {
+            p2.tailsFrame++;
+        }
+    }
+
+    let currentImg2 = tailsSprites[p2.tailsFrame - 1];
+
+    const drawTails2 = (img, x, y, w, h) => {
+        if (!img || !img.complete) return;
+        ctx.save();
+        if (p2.tailsDir === -1) {
+            ctx.translate(x + w, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, 0, 0, w, h);
+        } else {
+            ctx.drawImage(img, x, y, w, h);
+        }
+        ctx.restore();
+    };
+
+    if (p2.tailsFrame <= 5) {
+        drawTails2(currentImg2, p2.x - 25, p2.y - 40, 160, 160);
+    }
+    else if (p2.tailsFrame >= 6 && p2.tailsFrame <= 7) {
+        let offset = p2.x + (p2.tailsDir * 120);
+        drawTails2(currentImg2, offset, p2.y + 25, 80, 80);
+    }
+    else if (p2.tailsFrame >= 8 && p2.tailsFrame <= 13) {
+        p2.tailsMoveDist = (p2.tailsMoveDist || 120) + (p2.tailsDir * 22);
+        let moveX = p2.x + p2.tailsMoveDist;
+        let attackSize = (p2.tailsFrame === 8 || p2.tailsFrame === 9) ? 64 : 80;
+        let yPos = (p2.tailsFrame === 8 || p2.tailsFrame === 9) ? p2.y + 35 : p2.y + 25;
+        drawTails2(currentImg2, moveX, yPos, attackSize, attackSize);
+    }
+    else if (p2.tailsFrame >= 14 && p2.tailsFrame <= 18) {
+        drawTails2(currentImg2, p2.x - 25, p2.y - 40, 160, 160);
+    }
+    else {
+        p2.isTailsMode = false;
+        p2.tailsFrame = 0;
+        p2.tailsTimer = 0;
+        p2.tailsMoveDist = 0;
+        p2.tailsDir = null;
+        p2.stuckCounter = 0;
     }
 }
 
