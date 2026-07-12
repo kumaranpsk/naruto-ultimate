@@ -63,6 +63,17 @@
             letter-spacing: 2px;
         }
 
+        /* --- HIDE SCROLLBARS EVERYWHERE (scrolling itself still works, just no visible bar) --- */
+        * {
+            scrollbar-width: none;      /* Firefox */
+            -ms-overflow-style: none;   /* IE / old Edge */
+        }
+        *::-webkit-scrollbar {
+            display: none;              /* Chrome, Safari, new Edge, Opera */
+            width: 0;
+            height: 0;
+        }
+
         button {
             font-family: var(--font-body);
         }
@@ -264,7 +275,7 @@ canvas {
 }
 
 /* --- FIXED RESPONSIVE OVERLAY CONTAINERS ENGINE --- */
-        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen,
+        #startScreen, #charSelect, #difficultySelect, #endScreen, #settingsScreen, #shippudenMenu,
         #onlineMenu, #createRoomScreen, #joinRoomScreen, #coinTossScreen, #onlineCharSelect, #onlineReadyScreen, #leaderboardScreen { 
             position: absolute; 
             top: 50%; 
@@ -602,12 +613,9 @@ canvas {
         /* --- SHIPPUDEN MENU STYLING --- */
 #shippudenMenu {
     background: rgba(0, 0, 0, 0.9); /* Pure black overlay */
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    display: none;
+    text-align: center;
+    border-radius: 16px;
     z-index: 100;
 }
 
@@ -762,18 +770,21 @@ body::before {
     box-shadow: 0 0 12px var(--primary);
 }
 
-/* --- Angular ninja-styled buttons (clip-path kunai-edge look) --- */
+/* --- Unified rounded-card button style (matches Create Room / Join Room cards) --- */
 button {
     position: relative;
-    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
-    background: linear-gradient(135deg, rgba(243,156,18,0.95), rgba(180,60,20,0.95));
-    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #6b6b74, #38383f);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
     padding: 14px 34px;
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 2px;
     overflow: hidden;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.15);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.06);
+    transition: transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
+    cursor: pointer;
 }
 button::before {
     content: "";
@@ -784,39 +795,22 @@ button::before {
     transform: skewX(-20deg);
     transition: left 0.5s ease;
 }
-button:hover::before { left: 130%; }
-button:hover {
-    background: linear-gradient(135deg, var(--gold), var(--energy-red));
-    box-shadow: 0 0 28px rgba(255,140,20,0.7), inset 0 0 0 1px rgba(255,255,255,0.3);
+button:hover::before, button:active::before { left: 130%; }
+button:hover, button:active, button:focus-visible {
+    background: linear-gradient(135deg, #ff9d3d, #ff5433);
+    box-shadow: 0 8px 20px rgba(255,84,51,0.4), inset 0 0 0 1px rgba(255,255,255,0.2);
+    transform: translateY(-3px);
 }
 .back-btn {
-    background: linear-gradient(135deg, #3b4048, #1c2024) !important;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08) !important;
+    background: linear-gradient(135deg, #6b6b74, #38383f);
 }
+.main-menu-btn { padding: 10px 20px; margin: 0; min-width: 200px; }
+.settings-btn-sm { padding: 5px 10px; font-size: 12px; }
 /* --- Character select: cinematic hero cards instead of plain buttons --- */
 #charSelect {
-    background: 
-        radial-gradient(circle at 50% -10%, rgba(255,140,20,0.16), transparent 60%),
-        linear-gradient(160deg, rgba(22,24,30,0.72), rgba(8,9,13,0.68));
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 22px;
-    border: 1px solid rgba(255,255,255,0.10);
-    box-shadow: 
-        0 0 60px rgba(255,140,20,0.12),
-        0 25px 60px rgba(0,0,0,0.6),
-        inset 0 1px 0 rgba(255,255,255,0.06);
     padding: clamp(18px, 5vw, 38px) clamp(10px, 4vw, 24px) !important;
     overflow-x: hidden;
     overflow-y: auto;
-}
-#charSelect::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 16%; right: 16%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--chakra-cyan), var(--primary), transparent);
-    box-shadow: 0 0 14px var(--primary);
 }
 #charSelect h3 {
     font-family: var(--font-display);
@@ -825,23 +819,6 @@ button:hover {
     color: var(--gold);
     text-shadow: 0 0 16px rgba(255,209,102,0.6);
     margin-bottom: 22px;
-}
-#charSelect button:not(.back-btn) {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(4px, 1vw, 10px);
-    width: clamp(96px, 26vw, 220px);
-    padding: clamp(8px, 2vw, 22px) clamp(6px, 1.8vw, 18px);
-    margin: clamp(4px, 1.2vw, 12px) clamp(4px, 1.4vw, 14px);
-    font-size: clamp(11px, 2.6vw, 19px);
-    clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
-    background: linear-gradient(160deg, rgba(20,22,28,0.9), rgba(10,11,15,0.95));
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-    vertical-align: top;
 }
 .char-portrait {
     width: clamp(32px, 8vw, 68px);
@@ -852,27 +829,6 @@ button:hover {
     border: 2px solid rgba(255,255,255,0.15);
     box-shadow: 0 0 14px rgba(255,140,20,0.35);
     transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-#charSelect button:not(.back-btn):hover .char-portrait {
-    border-color: var(--primary);
-    box-shadow: 0 0 22px rgba(255,140,20,0.7);
-    transform: scale(1.08);
-}
-#charSelect button:not(.back-btn):hover {
-    transform: translateY(-6px) scale(1.04);
-    border-color: var(--primary);
-    box-shadow: 0 0 30px rgba(255,140,20,0.55), 0 14px 34px rgba(0,0,0,0.7);
-    background: linear-gradient(160deg, rgba(50,30,15,0.95), rgba(15,10,8,0.95));
-}
-
-/* --- Difficulty select: rank-styled panels --- */
-#difficultySelect button:not(.back-btn) {
-    display: block;
-    width: 260px;
-    margin: 10px auto;
-    text-align: left;
-    padding: 16px 26px;
-    font-size: 16px;
 }
 
 /* --- Mission cards (Shippuden) cinematic polish --- */
@@ -978,14 +934,19 @@ button:hover {
 }
 .hub-card {
     position: relative;
-    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(0,0,0,0.4));
-    border: 1px solid rgba(255,255,255,0.12);
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+    background: linear-gradient(135deg, #6b6b74, #38383f);
+    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 14px;
     padding: 16px 14px;
+    margin: 0;
     cursor: pointer;
     overflow: hidden;
     text-align: left;
-    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), border-color 0.25s, box-shadow 0.25s;
+    transition: transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .hub-card-wide { grid-column: span 2; }
 .hub-card::before {
@@ -999,31 +960,103 @@ button:hover {
     opacity: 0.45;
     transition: opacity 0.25s;
 }
-.hub-card:hover { transform: translateY(-5px) scale(1.02); }
+.hub-card:hover, .hub-card:active {
+    transform: translateY(-3px);
+    background: linear-gradient(135deg, #ff9d3d, #ff5433);
+    box-shadow: 0 8px 20px rgba(255,84,51,0.4);
+    border-color: rgba(255,255,255,0.25);
+}
 .hub-card:hover::before { opacity: 0.9; }
 .hub-card-icon { font-size: 26px; margin-bottom: 6px; display: inline-block; }
 .hub-card-title { font-family: var(--font-display); font-size: 17px; letter-spacing: 1px; color: #fff; margin-bottom: 2px; }
-.hub-card-desc { font-family: var(--font-body); font-size: 11px; color: #aaa; }
+.hub-card-desc { font-family: var(--font-body); font-size: 11px; color: #aaa; transition: color 0.25s ease; }
+.hub-card:hover .hub-card-desc, .hub-card:active .hub-card-desc { color: rgba(255,255,255,0.9); }
 
 .hub-card[data-accent="fight"] { border-color: rgba(230,126,34,0.4); }
 .hub-card[data-accent="fight"]::before { background: var(--secondary); }
-.hub-card[data-accent="fight"]:hover { box-shadow: 0 8px 20px rgba(230,126,34,0.3); border-color: var(--secondary); }
 
 .hub-card[data-accent="online"] { border-color: rgba(51,224,255,0.4); }
 .hub-card[data-accent="online"]::before { background: var(--chakra-cyan); }
-.hub-card[data-accent="online"]:hover { box-shadow: 0 8px 20px rgba(51,224,255,0.3); border-color: var(--chakra-cyan); }
 
 .hub-card[data-accent="story"] { border-color: rgba(255,209,102,0.4); }
 .hub-card[data-accent="story"]::before { background: var(--gold); }
-.hub-card[data-accent="story"]:hover { box-shadow: 0 8px 20px rgba(255,209,102,0.3); border-color: var(--gold); }
 
 .hub-card[data-accent="training"] { border-color: rgba(52,152,219,0.4); }
 .hub-card[data-accent="training"]::before { background: #3498db; }
-.hub-card[data-accent="training"]:hover { box-shadow: 0 8px 20px rgba(52,152,219,0.3); border-color: #3498db; }
 
 .hub-card[data-accent="leaderboard"] { border-color: rgba(155,89,182,0.4); }
 .hub-card[data-accent="leaderboard"]::before { background: #9b59b6; }
-.hub-card[data-accent="leaderboard"]:hover { box-shadow: 0 8px 20px rgba(155,89,182,0.3); border-color: #9b59b6; }
+
+.hub-card[data-accent="naruto"] { border-color: rgba(255,140,0,0.4); }
+.hub-card[data-accent="naruto"]::before { background: #ff8c00; }
+
+.hub-card[data-accent="sasuke"] { border-color: rgba(52,152,219,0.4); }
+.hub-card[data-accent="sasuke"]::before { background: #3498db; }
+
+.hub-card[data-accent="easy"] { border-color: rgba(46,204,113,0.4); }
+.hub-card[data-accent="easy"]::before { background: #2ecc71; }
+
+.hub-card[data-accent="medium"] { border-color: rgba(230,126,34,0.4); }
+.hub-card[data-accent="medium"]::before { background: var(--secondary); }
+
+.hub-card[data-accent="hard"] { border-color: rgba(192,57,43,0.4); }
+.hub-card[data-accent="hard"]::before { background: var(--danger); }
+
+.hub-card[data-accent="create"] { border-color: rgba(39,174,96,0.4); }
+.hub-card[data-accent="create"]::before { background: #27ae60; }
+
+.hub-card[data-accent="join"] { border-color: rgba(41,128,185,0.4); }
+.hub-card[data-accent="join"]::before { background: #2980b9; }
+
+/* --- ROOM SHORTCUT CARDS (Create Room / Join Room quick-access, styled to match reference video) --- */
+.room-shortcut-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    width: 100%;
+    margin: 10px 0 2px;
+    flex-wrap: wrap;
+}
+.room-shortcut-card {
+    flex: 1 1 130px;
+    max-width: 170px;
+    background: linear-gradient(135deg, #6b6b74, #38383f);
+    border-radius: 14px;
+    padding: 12px 14px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: left;
+    transition: transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.room-shortcut-card:hover, .room-shortcut-card:active, .room-shortcut-card:focus-visible {
+    background: linear-gradient(135deg, #ff9d3d, #ff5433);
+    box-shadow: 0 8px 20px rgba(255,84,51,0.4);
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.25);
+}
+.room-shortcut-icon { font-size: 22px; display: block; margin-bottom: 6px; }
+.room-shortcut-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #fff;
+    font-weight: 900;
+    margin-bottom: 2px;
+}
+.room-shortcut-desc {
+    font-family: var(--font-body);
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    transition: color 0.25s ease;
+}
+.room-shortcut-card:hover .room-shortcut-desc, .room-shortcut-card:active .room-shortcut-desc { color: rgba(255,255,255,0.9); }
+
+/* Fighter-select cards need a bigger circular portrait instead of the small icon glyph */
+.hub-card-fighter { text-align: center; }
+.hub-card-fighter .char-portrait { width: 64px; height: 64px; margin-bottom: 8px; }
+.hub-card-fighter .hub-card-title { text-align: center; }
+.hub-card-fighter .hub-card-desc { text-align: center; }
 
 /* --- KEY REMAP ROW --- */
 .remap-row {
@@ -1107,8 +1140,8 @@ button:hover {
 
   <!-- Content wrapper inside flexbox alignments limits bounds setup map -->
   <div id="mainMenuButtons" style="display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%;">
-    <button onclick="activateLeafVillageFullScreen(); showModeSelect();" style="background: #ff8800; padding: 10px 20px; margin: 0; min-width: 200px;">🎮 ENTER WORLD</button>
-    <button onclick="toggleSettings(true)" style="background: #ff8800; padding: 10px 20px; margin: 0; min-width: 200px;">⚙️ SETTINGS</button>
+    <button class="main-menu-btn" onclick="activateLeafVillageFullScreen(); showModeSelect();">🎮 ENTER WORLD</button>
+    <button class="main-menu-btn" onclick="toggleSettings(true)">⚙️ SETTINGS</button>
   </div>
 
   <div id="modeSelect" style="display:none;">
@@ -1155,14 +1188,14 @@ button:hover {
         <div class="setting-row">
             <span>GRAPHICS (FPS)</span>
             <div>
-                <button onclick="setFPS(30)" id="fps30" style="padding: 5px 10px; font-size: 12px;">30 FPS</button>
-                <button onclick="setFPS(60)" id="fps60" style="padding: 5px 10px; font-size: 12px; background: green;">60 FPS</button>
+                <button onclick="setFPS(30)" id="fps30" class="settings-btn-sm">30 FPS</button>
+                <button onclick="setFPS(60)" id="fps60" class="settings-btn-sm" style="background: green;">60 FPS</button>
             </div>
         </div>
 
         <div class="setting-row">
             <span>MOBILE CONTROLS</span>
-            <button onclick="startCustomizing()" style="padding: 5px 10px; font-size: 12px;">CUSTOMIZE LAYOUT</button>
+            <button onclick="startCustomizing()" class="settings-btn-sm">CUSTOMIZE LAYOUT</button>
         </div>
 
         <hr style="border: 0.5px solid #444; margin: 20px 0;">
@@ -1191,27 +1224,58 @@ button:hover {
 
 <div id="charSelect">
     <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">CHOOSE YOUR NINJA</h3>
-    <button onclick="chooseChar('naruto')"><img src="rnaruto.png" class="char-portrait" onerror="this.style.display='none'"><span>Naruto Uzumaki</span></button>
-    <button onclick="chooseChar('sasuke')"><img src="rsasuke.png" class="char-portrait" onerror="this.style.display='none'"><span>Sasuke Uchiha</span></button>
-    <br>
+    <div class="hub-grid">
+        <button class="hub-card hub-card-fighter" data-accent="naruto" onclick="chooseChar('naruto')">
+            <img src="rnaruto.png" class="char-portrait" onerror="this.style.display='none'">
+            <div class="hub-card-title">Naruto Uzumaki</div>
+            <div class="hub-card-desc">Shadow Clone · Rasengan</div>
+        </button>
+        <button class="hub-card hub-card-fighter" data-accent="sasuke" onclick="chooseChar('sasuke')">
+            <img src="rsasuke.png" class="char-portrait" onerror="this.style.display='none'">
+            <div class="hub-card-title">Sasuke Uchiha</div>
+            <div class="hub-card-desc">Sharingan · Chidori</div>
+        </button>
+    </div>
     <button class="back-btn" onclick="goBack('start')">⬅ Return</button>
 </div>
 
 <div id="difficultySelect">
     <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">SELECT MISSION RANK</h3>
-    <button onclick="setDifficulty('easy')">Easy (Rank D)</button>
-    <button onclick="setDifficulty('medium')">Medium (Rank B)</button>
-    <button onclick="setDifficulty('hard')">Hard (Rank S)</button>
-    <br>
+    <div class="hub-grid">
+        <button class="hub-card hub-card-wide" data-accent="easy" onclick="setDifficulty('easy')">
+            <div class="hub-card-icon">🟢</div>
+            <div class="hub-card-title">Rank D — Easy</div>
+            <div class="hub-card-desc">Relaxed pace, forgiving bot</div>
+        </button>
+        <button class="hub-card hub-card-wide" data-accent="medium" onclick="setDifficulty('medium')">
+            <div class="hub-card-icon">🟠</div>
+            <div class="hub-card-title">Rank B — Medium</div>
+            <div class="hub-card-desc">Blocks, retreats, real pressure</div>
+        </button>
+        <button class="hub-card hub-card-wide" data-accent="hard" onclick="setDifficulty('hard')">
+            <div class="hub-card-icon">🔴</div>
+            <div class="hub-card-title">Rank S — Hard</div>
+            <div class="hub-card-desc">Sharp, punishing, saves chakra</div>
+        </button>
+    </div>
     <button class="back-btn" onclick="goBack('char')">⬅ Return</button>
 </div>
 
 <!-- ============ ONLINE MULTIPLAYER: room create/join, coin toss, character select ============ -->
 <div id="onlineMenu">
     <h3 style="font-size: 22px; text-shadow: 0 0 10px var(--primary);">PLAY WITH FRIEND</h3>
-    <button onclick="createRoom()" style="background:#27ae60;">🏠 CREATE ROOM</button>
-    <button onclick="showJoinRoomScreen()" style="background:#2980b9;">🔑 JOIN ROOM</button>
-    <br>
+    <div class="hub-grid">
+        <button class="hub-card" data-accent="create" onclick="createRoom()">
+            <div class="hub-card-icon">🏠</div>
+            <div class="hub-card-title">Create Room</div>
+            <div class="hub-card-desc">Get a code to share</div>
+        </button>
+        <button class="hub-card" data-accent="join" onclick="showJoinRoomScreen()">
+            <div class="hub-card-icon">🔑</div>
+            <div class="hub-card-title">Join Room</div>
+            <div class="hub-card-desc">Enter a friend's code</div>
+        </button>
+    </div>
     <button class="back-btn" onclick="backFromOnlineMenu()">⬅ Return</button>
 </div>
 
@@ -2659,6 +2723,7 @@ function showOnlineMenu() {
 
 function backFromOnlineMenu() {
     document.getElementById("onlineMenu").style.display = "none";
+    document.getElementById("startScreen").style.display = "flex"; // modeSelect lives inside startScreen — make sure the parent is visible too
     document.getElementById("modeSelect").style.display = "block";
 }
 
@@ -2734,7 +2799,12 @@ function createRoom() {
         winnerChar: null,
         createdAt: Date.now()
     }).then(() => {
-        document.getElementById("onlineMenu").style.display = "none";
+        // Hide whichever screen this was launched from — onlineMenu (original flow) or one of the
+        // new quick-access shortcuts (first page / settings / mode select, all live inside startScreen)
+        ["onlineMenu", "startScreen", "settingsScreen"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = "none";
+        });
         document.getElementById("createRoomScreen").style.display = "block";
         document.getElementById("roomCodeDisplay").innerText = code;
         document.getElementById("createRoomStatus").innerText = "⏳ Waiting for friend to join...";
@@ -2745,7 +2815,10 @@ function createRoom() {
 }
 
 function showJoinRoomScreen() {
-    document.getElementById("onlineMenu").style.display = "none";
+    ["onlineMenu", "startScreen", "settingsScreen"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+    });
     document.getElementById("joinRoomScreen").style.display = "block";
 }
 
